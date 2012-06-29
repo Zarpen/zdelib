@@ -30,7 +30,6 @@ function M(id,sub_id){
 				var name = sub_id.substr(0,sub_id.length-1);
 				if(M.i) temp = M.i.getChild(id,name,[]);
 				var op_char = sub_id.charAt(sub_id.length-1);
-				op_char = op_char ? op_char : "C";
 				switch(op_char){case "C": mode = "class";break; case "D": mode = "dom";break; case "O": mode = "object";break;}
 			}
 			M.i.me = false;
@@ -41,7 +40,6 @@ function M(id,sub_id){
 		}else{
 			var id_char = id.substr(0,1);
 			var op_char = id.charAt(id.length-1);
-			op_char = op_char ? op_char : "C";
 			var temp_base = M.i.base_doc ? M.i.base_doc : M.i.base_win.document;
 			var res = temp_base.getElementById(id);
 			var name = id.slice(1,id.length-1);
@@ -80,7 +78,7 @@ M.prototype.init = function(){
 	M.i.zg.c = M.i.zg.c();
 	
 	// attach object events
-	M.i.add_event("mousemove",function(e){
+	M.i.add_event("mousemove",{"func":function(e){
 		M.i.cancel_event(e);
 		for(var i=0;i<M.i.reg_objs.length;i++){
 			if(M.i.reg_objs[i].drag){
@@ -97,7 +95,7 @@ M.prototype.init = function(){
 				}
 			}
 		}
-	},true,M.i.base_doc.getElementsByTagName("html")[0],true);
+	},"capture":true},M.i.base_doc.getElementsByTagName("html")[0]);
 }
 M.prototype.getMe = function(){
 	return M.i.me;
@@ -224,15 +222,31 @@ M.prototype.getChild = function(comienzo,patron){
 						// special search
 						// attr search
 						if(p.substr(0,1) == "["){
-							var att_val = p.substr(1,p.length).split("=");
+							var split_type = false;
+							if(p.search("=") >= 0) split_type = "=";
+							if(!split_type && p.search("*") >= 0) split_type = "*";
+							var att_val = p.replace("[","").replace("]","").split(split_type);
 							try{var attr = h.getAttribute(att_val[0]);}catch(e){var attr = false;};
-							if(attr) if(attr.search(att_val[1]) >= 0) ar_res.push(h);
+							if(attr){
+								switch(split_type){
+									case "=": if(attr == att_val[1]) ar_res.push(h); break;
+									case "*": if(attr.search(att_val[1]) >= 0) ar_res.push(h); break;
+								}
+							}
 						}
 						// sty search
 						if(p.substr(0,1) == "("){
-							var st_val = p.substr(1,p.length).split("=");
+							var split_type = false;
+							if(p.search("=") >= 0) split_type = "=";
+							if(!split_type && p.search("*") >= 0) split_type = "*";
+							var st_val = p.replace("{","").replace("}","").split(split_type);
 							try{var sty = h.style[st_val[0]];}catch(e){var sty = false;};
-							if(sty) if(sty.search(st_val[1]) >= 0) ar_res.push(h);
+							if(sty){
+								switch(split_type){
+									case "=": if(sty == sty_val[1]) ar_res.push(h); break;
+									case "*": if(sty.search(sty_val[1]) >= 0) ar_res.push(h); break;
+								}
+							}
 						}
 					}
 				}
@@ -269,17 +283,17 @@ M.prototype.iter = function(func,elements){
 	try{for(var i=0;i<elements.length;i++) func(elements[i],i);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
-M.prototype.add_event = function(event,func,capture,to,ev){
+M.prototype.add_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.add_event(event,function(i){return function(){func.apply(i,arguments);}}(item),capture,item,ev);},element);
-	if (element.attachEvent) element.attachEvent('on' + event,function(e){ if(ev != undefined && ev) func(e); else func();});
-	else element.addEventListener(event,function(e){ if(ev != undefined && ev) func(e); else func();},capture);
+	if(element.length) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
+	if (element.attachEvent) element.attachEvent('on' + event,function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);});
+	else element.addEventListener(event,function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);},options["capture"]);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
-M.prototype.del_event = function(event,func,capture,to){
+M.prototype.del_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.del_event(event,function(i){return function(){func.apply(i,arguments);}}(item),capture,item);},element);
-	if(element.removeEventListener) element.removeEventListener(event,func,capture); else element.detachEvent("on"+event,func);
+	if(element.length) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
+	if(element.removeEventListener) element.removeEventListener(event,options["func"],options["capture"]); else element.detachEvent("on"+event,options["func"]);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.cancel_event = function(e){
@@ -550,7 +564,7 @@ M.prototype.create = function(type,name,options){
 		if(options){
 			if(options["attr"]) M.i.set_attr(options["attr"],new_element);
 			if(options["sty"]) M.i.set_sty(options["sty"],new_element);
-			if(options["bind"]) for(var item in options["bind"]) M.i.add_event(item,options["bind"][item],true,new_element,true);
+			if(options["bind"]) for(var item in options["bind"]) M.i.add_event(item,{"func":options["bind"][item],"capture":true},new_element);
 			if(options["text"]) M.i.addText(options["text"],new_element);
 			if(options["guid"]) new_element.id = new_element.name = M.i.guid();
 			if(options["html"]) new_element.innerHTML = options["html"];
@@ -1098,20 +1112,20 @@ M.prototype.drag = function(limits,to){
 	M.i.set_sty("position:absolute;top:"+pos[1]+";left:"+pos[0]+";",element.parentNode);
 	// modify original object style to adapt to new wrapper container
 	element.style.position = "relative";element.style.left = 0;element.style.top = 0;element.style.zIndex = "auto";
-	M.i.add_event("mousedown",function(e){
+	M.i.add_event("mousedown",{"func":function(e){
 		M.i.cancel_event(e);
 		obj.drag = true;
 		var ev_pos = M.i.event_pos(e);
 		var obj_pos = M.i.get_pos(obj.me,true);
 		obj.data.ipush = [ev_pos[0]-obj_pos[0],ev_pos[1]-obj_pos[1],obj_pos[2],obj_pos[3]];
 		obj.me.parentNode.style.zIndex = 100;
-	},true,element.parentNode,true);
-	M.i.add_event("mouseup",function(e){
+	},"capture":true},element.parentNode);
+	M.i.add_event("mouseup",{"func":function(e){
 		M.i.cancel_event(e);
 		obj.drag = false;
 		obj.data.ipush=false;
 		obj.me.parentNode.style.zIndex = "auto";
-	},true,element.parentNode,true);
+	},"capture":true},element.parentNode);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.undrag = function(to){
@@ -1120,8 +1134,8 @@ M.prototype.undrag = function(to){
 	
 	var obj = M.i.get_obj(element);
 	element.style = obj.style;
-	M.i.del_event("mousedown",function(){obj.drag = true;},true,element,true);
-	M.i.del_event("mouseup",function(){obj.drag = false;obj.me.style.zIndex=1;},true,element,true);
+	M.i.del_event("mousedown",{"func":function(){obj.drag = true;},"capture":true},element);
+	M.i.del_event("mouseup",{"func":function(){obj.drag = false;obj.me.style.zIndex=1;},"capture":true},element);
 	M.i.obj_unreg(element,false);
 	M.i.unwrap(element);
 	
@@ -1376,6 +1390,8 @@ M.prototype.DJSON = function(options){
 M.prototype.nav = function(i){
 	try{M.i.me = false;if(isNaN(i)){
 		M.i.me = M.i.getElement(i);
+		M.i.nav_reg.push(M.i.me);
+		M.i.selector = i;
 	}else{
 		M.i.me = M.i.nav_reg[i < 0 ? M.i.nav_reg.length-1 : i];
 	}
@@ -1466,7 +1482,8 @@ M.prototype.debug = function(mode){
 }
 // item selector
 M.prototype.z_selector = function(path){
-	try{var path_array = path.split(">");
+	try{
+	var path_array = path.split(">");
 	var path_len = path_array.length;
 	var path_result = false;
 	var token_result = [];
@@ -1541,19 +1558,21 @@ M.prototype._class = function(class_name,to,args){
 	if(!M.i.class_instances[M.i.selector]){
 		if(!M.i._is_class(element)){
 			M.i.class_instances[M.i.selector] = [class_name,[]];
-			var cobj = new M.prototype[class_name](args);
+			var final_args = args ? args : {};
+			final_args.focus = element;
+			final_args.selector = M.i.selector;
+			var cobj = new M.prototype[class_name](final_args);
 			cobj.prototype = M.prototype[class_name].prototype;
 			// attach node to class
-			cobj.prototype.focus = element;
-			cobj.prototype.selector = M.i.selector;
 			M.i.class_instances[M.i.selector][1].push(cobj);
 		}
 	}else{
 		if(!M.i._is_class(element)){
-			var cobj = new M.prototype[class_name](args);
+			var final_args = args ? args : {};
+			final_args.focus = element;
+			final_args.selector = M.i.selector;
+			var cobj = new M.prototype[class_name](final_args);
 			cobj.prototype = M.prototype[class_name].prototype;
-			cobj.prototype.focus = element;
-			cobj.prototype.selector = M.i.selector;
 			M.i.class_instances[M.i.selector][1].push(cobj);
 		}
 	}
@@ -1568,6 +1587,7 @@ M.prototype._unclass = function(to){
 	if(ins){
 		for(var i=0;i<ins.length;i++){
 			ins[i].prototype.focus = null;
+			try{ins[i]._delete();}catch(e){}
 			delete ins[i];
 			ins[i] = false;
 			ins.splice(i,1);
@@ -1580,6 +1600,7 @@ M.prototype._unclass = function(to){
 				var found = M.i._is_class(item);
 				if(found){
 					M.i.class_instances[found[0]][found[1]].prototype.focus = null;
+					try{M.i.class_instances[found[0]][found[1]]._delete();}catch(e){}
 					delete M.i.class_instances[found[0]][found[1]];
 					M.i.class_instances[found[0]][found[1]] = false;
 					M.i.class_instances[found[0]].splice(i,1);
@@ -1589,6 +1610,7 @@ M.prototype._unclass = function(to){
 			var found = M.i._is_class(element);
 			if(found){
 				M.i.class_instances[found[0]][found[1]].prototype.focus = null;
+				try{M.i.class_instances[found[0]][found[1]]._delete();}catch(e){}
 				delete M.i.class_instances[found[0]][found[1]];
 				M.i.class_instances[found[0]][found[1]] = false;
 				M.i.class_instances[found[0]].splice(i,1);
@@ -1605,6 +1627,7 @@ M.prototype._unclass_type = function(class_name){
 			if(classes[key][0] == class_name){
 				for(var i=0;i<classes[key][1].length;i++){
 					classes[key][1][i].prototype.focus = null;
+					try{classes[key][1][i]._delete();}catch(e){}
 					delete classes[key][1][i];
 					classes[key][1][i] = false;
 					classes[key][1].splice(i,1);
@@ -1623,6 +1646,7 @@ M.prototype._unclass_all = function(){
 		if(classes[key]){
 			for(var i=0;i<classes[key][1].length;i++){
 				classes[key][1][i].prototype.focus = null;
+				try{classes[key][1][i]._delete();}catch(e){}
 				delete classes[key][1][i];
 				classes[key][1][i] = false;
 				classes[key][1].splice(i,1);
