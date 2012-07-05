@@ -286,14 +286,19 @@ M.prototype.iter = function(func,elements){
 M.prototype.add_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element.length) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
-	if (element.attachEvent) element.attachEvent('on' + event,function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);});
-	else element.addEventListener(event,function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);},options["capture"]);
+	var func = function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);};
+	if (element.attachEvent) element.attachEvent('on' + event,func);
+	else element.addEventListener(event,func,options["capture"]);
+	M.i.bind_events.push([element,options["func"],func,event]);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.del_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element.length) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
-	if(element.removeEventListener) element.removeEventListener(event,options["func"],options["capture"]); else element.detachEvent("on"+event,options["func"]);
+	var func = false;
+	for(var i=0;i<M.i.bind_events.length;i++) if(M.i.bind_events[i][0] === element && M.i.bind_events[i][1].toString() == options["func"].toString() && M.i.bind_events[i][3] == event) func = i;
+	if(element.removeEventListener) element.removeEventListener(event,func ? M.i.bind_events[func][2] : function(){},options["capture"]); else element.detachEvent("on"+event,func ? M.i.bind_events[func][2] : function(){});
+	if(func){M.i.bind_events[func][0] = false;M.i.bind_events.slice(func,func+1);}
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.cancel_event = function(e){
@@ -558,8 +563,8 @@ M.prototype.create = function(type,name,options){
 	try{
 		var new_element = M.i.base_doc.createElement(type);
 		if(name){
-			new_element.setAttribute("id",name);
-			new_element.setAttribute("name",name);
+			if(!options || (options["attr"] && options["attr"].search("id") < 0)) new_element.setAttribute("id",name);
+			if(!options || (options["attr"] && options["attr"].search("name") < 0)) new_element.setAttribute("name",name);
 		}
 		if(options){
 			if(options["attr"]) M.i.set_attr(options["attr"],new_element);
@@ -576,8 +581,18 @@ M.prototype.create = function(type,name,options){
 M.prototype.append = function(node,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element.length) return M.i.iter(function(item,index){M.i.append(node,item);},element);
-	if(node.tagName == "tr" || node.tagName == "TR") if(element.tagName == "table" || element.tagName == "TABLE") if(element.tBodies.length <= 0) M.i.add("tbody","","",element);
-	element.appendChild(node);
+	var final_element;
+	if(node.tagName == "tr" || node.tagName == "TR"){ 
+		if(element.tagName == "table" || element.tagName == "TABLE"){ 
+			if(element.tBodies.length <= 0){
+				M.i.add("tbody","","",element);
+				final_element = element.tBodies[0];
+			}else{
+				final_element = element.tBodies[element.tBodies.length-1];
+			} 
+		}
+	}
+	if(final_element) final_element.appendChild(node); else element.appendChild(node);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.add = function(type,name,options,to){
@@ -585,6 +600,105 @@ M.prototype.add = function(type,name,options,to){
 	if(element.length) return M.i.iter(function(item,index){M.i.add(type,name,options,item);},element);
 	var new_node = M.i.create(type,name,options);
 	M.i.append(new_node,element);
+	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.addm = function(data,to){
+	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
+	if(element.length) return M.i.iter(function(item,index){M.i.add(type,name,options,item);},element);
+	
+	var regexp = /<(.|\n)*?>/g;
+	//var regexp_close = /<\s*\/\s*\w\s*.*?>|<\s*br\s*>/g;
+	
+	var tags = data.match(regexp);
+	var open_node = element;
+	var nodes = [];
+	var content = data;
+	
+	nodes.push([element.tagName,false,element]);
+	// iterate tags and process
+	for(var i=0;i<tags.length;i++){
+		// get tagname
+		var tagname;
+		for(var j=0;j<tags[i].length;j++){ if(tags[i].charAt(j) == " " || tags[i].charAt(j) == ">"){tagname = M.i.trim(tags[i].substr(1,j-1));break;} }
+		// check for attrs
+		var attr_tag = tags[i].replace(tagname,"");
+		attr_tag = tags[i].replace("<","");
+		attr_tag = attr_tag.replace("/","");
+		attr_tag = attr_tag.replace("\\","");
+		attr_tag = attr_tag.replace(">","");
+		
+		var attr_str = "",sty_str = "";
+		var attrs = [];
+		var quote = false;
+		for(var j=0;j<attr_tag.length;j++){
+			if(attr_tag.charAt(j) == "'" || attr_tag.charAt(j) == '"') quote = !quote;
+			if(!quote){
+				if(attr_tag.charAt(j) == " "){
+					if(attrs.length < 1){
+						attrs.push([j+1,false]);
+					}else{
+						var found = false;
+						for(var z=0;z<attrs.length;z++) if(!attrs[z][1]) found = z;
+						if(found >= 0){
+							attrs[found][1] = j;
+							attrs.push([j+1,false]);
+						}
+					}
+				}
+			}
+		}
+		for(var j=0;j<attrs.length;j++){
+			if(attrs[j][0] && attrs[j][1]){
+				attrs[j] = attr_tag.substr(attrs[j][0],attrs[j][1]-attrs[j][0]);
+				if(attrs[j].search("style") >= 0){
+					sty_str = attrs[j].substr(6);
+					sty_str = sty_str.replace(/"/g,"");
+					sty_str = sty_str.replace(/'/g,"");
+				}else{
+					var final_attr = attrs[j].replace(/"/g,"");
+					final_attr = final_attr.replace(/'/g,"");
+					attr_str = attr_str+final_attr+";";
+				}
+			}
+		}
+		
+		var temp = "";
+		for(var j=0;j<content.length;j++){if(temp == tags[i]){temp = j;break;}else{temp = temp+content.charAt(j);}}
+		content = content.substr(temp);
+		temp = "";
+		for(var j=0;j<content.length;j++){if(temp.search(tags[i+1]) >= 0){temp = temp.replace(tags[i+1],"");content = content.substr(temp.length);break;}else{temp = temp+content.charAt(j);}}
+		if(temp == "&nbsp;") temp = "\u00A0";
+		if(temp.match(regexp)) temp = false; 
+		
+		if(tags[i].match(/</).length < 2 && tags[i].search("</") >= 0){
+			// is close tag
+			for(var j=nodes.length-1;j>=0;j--){if(!nodes[j][1]){nodes[j][1] = true;break;}}
+			for(var j=nodes.length-1;j>=0;j--){if(!nodes[j][1]){open_node = nodes[j][2];break;}}
+			if(temp) M.i.addText(temp,open_node);
+		}else if(tags[i].match(/</).length < 2 && tags[i].search("</") < 0){
+			// is open tag
+			if(tags[i].match(/\/>/)){
+				var new_node;
+				if(tags[i].search("br") > 0){
+					new_node = M.i.base_doc.createElement("br");
+					M.i.append(new_node,open_node);
+					if(temp) M.i.addText(temp,open_node);
+				}else{
+					new_node = M.i.create(tagname,"",{"attr":attr_str,"sty":sty_str});
+					M.i.append(new_node,open_node);	
+					if(temp) M.i.addText(temp,open_node);
+				}
+				nodes.push([tagname,true,new_node]);
+			}else{
+				var new_node = M.i.create(tagname,"",{"attr":attr_str,"sty":sty_str});
+				M.i.append(new_node,open_node);
+				nodes.push([tagname,false,new_node]);
+				open_node = new_node;
+				if(temp) M.i.addText(temp,open_node);
+			}
+		}
+	}
+	
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.del = function(to){
@@ -1585,7 +1699,7 @@ M.prototype._unclass = function(to){
 	var sel = "";
 	if(M.i.class_instances[M.i.selector]){ins = M.i.class_instances[M.i.selector][1];sel = M.i.selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
 	if(ins){
-		for(var i=0;i<ins.length;i++){
+		for(var i=ins.length-1;i >= 0;i--){
 			ins[i].prototype.focus = null;
 			try{ins[i]._delete();}catch(e){}
 			delete ins[i];
@@ -1625,7 +1739,7 @@ M.prototype._unclass_type = function(class_name){
 	for(key in classes){
 		if(classes[key]){
 			if(classes[key][0] == class_name){
-				for(var i=0;i<classes[key][1].length;i++){
+				for(var i=classes[key][1].length-1;i >= 0;i--){
 					classes[key][1][i].prototype.focus = null;
 					try{classes[key][1][i]._delete();}catch(e){}
 					delete classes[key][1][i];
@@ -1644,7 +1758,7 @@ M.prototype._unclass_all = function(){
 	try{var classes = M.i.class_instances;
 	for(key in classes){
 		if(classes[key]){
-			for(var i=0;i<classes[key][1].length;i++){
+			for(var i=classes[key][1].length-1;i >= 0;i--){
 				classes[key][1][i].prototype.focus = null;
 				try{classes[key][1][i]._delete();}catch(e){}
 				delete classes[key][1][i];
@@ -1750,6 +1864,7 @@ if(typeof M.i.xhr_queue == 'undefined') M.i.xhr_queue = [];
 if(typeof M.i.jsonp_handler == 'undefined') M.i.jsonp_handler = {};
 if(typeof M.i.class_instances == 'undefined') M.i.class_instances = [];
 if(typeof M.i.selector == 'undefined') M.i.selector = "";
+if(typeof M.i.bind_events == 'undefined') M.i.bind_events = [];
 // lib document function events to set
 M.i.init();
 })();
