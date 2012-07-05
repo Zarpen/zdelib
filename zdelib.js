@@ -15,7 +15,6 @@ WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN 
 * _("selectorC") return class instance working with match elements
 * _("selectorD") return array with match dom elements
 * _("selectorO") return zdelib registered object
-* _("selector") return by default class instance working with match elements
 */
 //if(!window.M){
 function M(id,sub_id){
