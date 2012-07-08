@@ -562,8 +562,8 @@ M.prototype.create = function(type,name,options){
 	try{
 		var new_element = M.i.base_doc.createElement(type);
 		if(name){
-			if(!options || (options["attr"] && options["attr"].search("id") < 0)) new_element.setAttribute("id",name);
-			if(!options || (options["attr"] && options["attr"].search("name") < 0)) new_element.setAttribute("name",name);
+			if(!options || !options["attr"] || options["attr"].search("id") < 0) new_element.setAttribute("id",name);
+			if(!options || !options["attr"] || options["attr"].search("name") < 0) new_element.setAttribute("name",name);
 		}
 		if(options){
 			if(options["attr"]) M.i.set_attr(options["attr"],new_element);
@@ -818,8 +818,8 @@ M.prototype.set_pos = function(dim,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element.length) return M.i.iter(function(item,index){M.i.set_pos(dim,item);},element);
 	
-	element.style.top = isNaN(dim[0]) ? dim[0] : dim[0]+"px";
-	element.style.left = isNaN(dim[1]) ? dim[1] : dim[1]+"px";
+	element.style.left = isNaN(dim[0]) ? dim[0] : dim[0]+"px";
+	element.style.top = isNaN(dim[1]) ? dim[1] : dim[1]+"px";
 	element.style.width = isNaN(dim[2]) ?  dim[2] : dim[2]+"px";
 	element.style.height = isNaN(dim[3]) ? dim[3] : dim[3]+"px";
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
