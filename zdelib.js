@@ -111,6 +111,12 @@ M.prototype.setWin = function(to){
 	try{M.i.base_win = to ? (typeof to == "object" ? to : M.i.base_win.frames[to]) : window;
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
+M.prototype.getBase = function(){
+	return M.i.base_doc;
+}
+M.prototype.getWin = function(){
+	return M.i.base_win;
+}
 M.prototype.obj_reg = function(type,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	var exist = false,res_obj = false;
@@ -345,7 +351,7 @@ M.prototype.set_attr = function(attr_str,to){
 	if(element.length) return M.i.iter(function(item,index){M.i.set_attr(attr_str,item);},element);
 	
 	var temp,name = element.id,vector = attr_str.split(';'),st,stval,pos;
-	if(attr_str.search(/type/i) != -1 && (element.tagName == "input" || element.tagName == "INPUT")){
+	if(attr_str.search(/type/i) != -1 && (element.tagName == "input" || element.tagName == "INPUT") && element.parentNode){
 		temp = M.i.base_doc.createElement('input');
 		temp.id = name;
 		for(var i=0;i < vector.length;i++){
@@ -603,7 +609,7 @@ M.prototype.add = function(type,name,options,to){
 }
 M.prototype.addm = function(data,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.add(type,name,options,item);},element);
+	if(element.length) return M.i.iter(function(item,index){M.i.addm(data,item);},element);
 	
 	var regexp = /<(.|\n)*?>/g;
 	//var regexp_close = /<\s*\/\s*\w\s*.*?>|<\s*br\s*>/g;
@@ -893,10 +899,19 @@ M.prototype.gparent = function(to){
 		return element.parentNode ? element.parentNode : M.i.base_doc.body;
 	}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
-M.prototype.request = function(options){
+M.prototype.request = function(options,poll){
 	try{
 	var final_url = options["url"];
 	var type = options["type"] ? options["type"] : false;
+	var me_args = [options,true];
+	var me_obj = this;
+	var check_poll = function(name){
+		if(M.i.poll_exist(name)){
+			if(M.i.poll_live(name)) M.i.request.apply(me_obj,me_args);
+		}else{
+			if(!poll) M.i.start_poll(name);M.i.request.apply(me_obj,me_args);
+		}
+	}
 	
 	if(type && type == "jsonp"){
 		// special jsonp request
@@ -905,11 +920,38 @@ M.prototype.request = function(options){
 		var del_tag = options["deltag"] ? options["deltag"] : true;
 		
 		final_url = final_url.indexOf("?") < 0 ?  final_url+"?"+prefix+"="+pcallback : final_url+"&"+prefix+"="+pcallback;
-
-		if(options["pfunc"]) M.i.jsonp_handler[options["id"]] = function(data){
-			options["pfunc"](data);
-			if(del_tag) if(M.i.getElement(options["id"])) M.i.del(options["id"]);
-		};
+		
+		if(options["pfunc"]){
+			if(options["wrap"]){
+				// check if object exist and save
+				var temp_obj = M.i.base_win[options["wrap"]["key"]] ? M.i.base_win[options["wrap"]["key"]] : null;
+				// function for object iteration
+				var iterate = function(obj){
+					for (var property in obj) {
+						if (obj.hasOwnProperty(property)) {
+							if (typeof obj[property] == "object"){
+								iterate(obj[property]);
+							}else{
+								if(property == options["wrap"]["function_key"]) obj[property] = function(data){
+									options["pfunc"](data);
+									M.i.base_win[options["wrap"]["key"]] = temp_obj;
+									if(del_tag) if(M.i.getElement(options["id"])) M.i.del(options["id"]);
+									if(options["poll"]) check_poll(options["poll"]);
+								}
+							}
+						}
+					}
+				}
+				M.i.base_win[options["wrap"]["key"]] = options["wrap"]["value"];
+				iterate(M.i.base_win[options["wrap"]["key"]]);
+			}else{
+				M.i.jsonp_handler[options["id"]] = function(data){
+					options["pfunc"](data);
+					if(del_tag) if(M.i.getElement(options["id"])) M.i.del(options["id"]);
+					if(options["poll"]) check_poll(options["poll"]);
+				};
+			}
+		}
 		
 		M.i.add("script",options["id"],{"attr":"type=text/javascript;src="+final_url},M.i.base_doc.getElementsByTagName("head")[0]);
 	}else{
@@ -955,8 +997,10 @@ M.prototype.request = function(options){
 							else result = !options["jsontext"] ? M.i.DJSON({"json":xhr.responseText}) : xhr.responseText;
 						if(!result) result = xhr.responseText;
 						options["func"](result,xhr);
+						if(options["poll"]) check_poll(options["poll"]);
 					}else{
 						options["func"](xhr.responseText,xhr);
+						if(options["poll"]) check_poll(options["poll"]);
 					}
 				}
 			}
@@ -973,6 +1017,7 @@ M.prototype.request = function(options){
 				else result = !options["jsontext"] ? M.i.DJSON({"json":xhr.responseText}) : xhr.responseText;
 			if(!result) result = xhr.responseText;
 			options["func"](result,xhr);
+			if(options["poll"]) check_poll(options["poll"]);
 		}
 		return xhr;
 	}
@@ -1256,6 +1301,11 @@ M.prototype.undrag = function(to){
 }
 // HTML FUNCTIONS
 // COMMON JS FUNCTIONS
+M.prototype.in_array = function(val,subject){
+	try{var res = false;
+	for(var i=0;i<subject.length;i++) if(subject[i] === val) res = true;
+	return res;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
 M.prototype.getElementsByClassName = function(clname){
 	try{var elems = M.i.base_doc.body.getElementsByTagName("*");
 	var res = new Array();
@@ -1499,6 +1549,30 @@ M.prototype.DJSON = function(options){
 	}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 // LIB FUNCTIONS
+// request related functions
+M.prototype.poll_exist = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = true;
+	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.start_poll = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = i;
+	if(found === false) M.i.poll_request.push([name,true]); else M.i.poll_request[found][1] = true;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.stop_poll = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = i;
+	if(found || found === 0) M.i.poll_request[found][1] = false;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.poll_live = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = M.i.poll_request[i][1];
+	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.clear_poll = function(){
+	try{M.i.poll_request = [];}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
 // for add and reg_obj functions add simple reference navigation
 M.prototype.nav = function(i){
 	try{M.i.me = false;if(isNaN(i)){
@@ -1547,6 +1621,7 @@ M.prototype.error = function(err,arg){
 	var focus = arg.callee;
 	var focus_arg = arg;
 	
+	var error_loop_control = (new Date()).getTime();
 	while(focus){
 		var found = false;
 		for(k in this) if(this[k] == focus) found = k;
@@ -1568,6 +1643,7 @@ M.prototype.error = function(err,arg){
 		}
 		focus = focus.caller;
 		if(focus) focus_arg = focus.arguments;
+		if((new Date()).getTime() - error_loop_control > 1000) break;
 	}
 	
 	msg.innerHTML = stack;
@@ -1601,8 +1677,10 @@ M.prototype.z_selector = function(path){
 	var path_result = false;
 	var token_result = [];
 	path_result = M.i.getElement(M.i.trim(path_array[0]));
+	if(!path_result || path_result.length < 1) path_result = false; 
+	
 	for(var i=1;i<path_len;i++){
-		if(path_result){
+		if(path_result || (path_result.length > 0)){
 			if(path_result.length){
 				for(var j=0;j<path_result.length;j++){
 					var ok = true;
@@ -1666,8 +1744,8 @@ M.prototype.implement = function(class_name,impc_name){
 }
 M.prototype._class = function(class_name,to,args){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i._class(class_name,item);},element);
-
+	if(element.length) return M.i.iter(function(item,index){M.i._class(class_name,item,args);},element);
+	
 	if(!M.i.class_instances[M.i.selector]){
 		if(!M.i._is_class(element)){
 			M.i.class_instances[M.i.selector] = [class_name,[]];
@@ -1795,7 +1873,7 @@ M.prototype.invoke = function(method,to){
 				if(res) M.i.class_instances[res[0]][res[1]][method].apply(ins[i],args);
 			},element);
 		}else{
-			var res = M.i._is_class(item);
+			var res = M.i._is_class(element);
 			if(res) M.i.class_instances[res[0]][res[1]][method].apply(ins[i],args);
 		}
 	}
@@ -1864,6 +1942,7 @@ if(typeof M.i.jsonp_handler == 'undefined') M.i.jsonp_handler = {};
 if(typeof M.i.class_instances == 'undefined') M.i.class_instances = [];
 if(typeof M.i.selector == 'undefined') M.i.selector = "";
 if(typeof M.i.bind_events == 'undefined') M.i.bind_events = [];
+if(typeof M.i.poll_request == 'undefined') M.i.poll_request = [];
 // lib document function events to set
 M.i.init();
 })();
