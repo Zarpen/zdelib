@@ -358,9 +358,14 @@ M.prototype.set_attr = function(attr_str,to){
 			pos = vector[i].indexOf('=',0);
 			if(pos > -1){
 				st = vector[i].substring(0,pos);
-				if(st == 'class' && navigator.appName == 'Microsoft Internet Explorer') st = 'className';
-				stval = vector[i].substring(pos+1,vector[i].length);
-				temp.setAttribute(st,stval);
+				if(st == 'class' && navigator.appName == 'Microsoft Internet Explorer'){
+					stval = vector[i].substring(pos+1,vector[i].length);
+					element.setAttribute("class",stval);
+					element.setAttribute("className",stval);
+				}else{
+					stval = vector[i].substring(pos+1,vector[i].length);
+					temp.setAttribute(st,stval);
+				}
 			}
 		}
 		element.parentNode.replaceChild(temp,element);
@@ -369,9 +374,14 @@ M.prototype.set_attr = function(attr_str,to){
 			pos = vector[i].indexOf('=',0);
 			if(pos > -1){
 				st = vector[i].substring(0,pos);
-				if(st == 'class' && navigator.appName == 'Microsoft Internet Explorer') st = 'className';
-				stval = vector[i].substring(pos+1,vector[i].length);
-				element.setAttribute(st,stval);
+				if(st == 'class' && navigator.appName == 'Microsoft Internet Explorer'){
+					stval = vector[i].substring(pos+1,vector[i].length);
+					element.setAttribute("class",stval);
+					element.setAttribute("className",stval);
+				}else{
+					stval = vector[i].substring(pos+1,vector[i].length);
+					element.setAttribute(st,stval);
+				}
 			}
 		}
 	}
@@ -907,7 +917,12 @@ M.prototype.request = function(options,poll){
 	var me_obj = this;
 	var check_poll = function(name){
 		if(M.i.poll_exist(name)){
-			if(M.i.poll_live(name)) M.i.request.apply(me_obj,me_args);
+			if(M.i.poll_live(name)){
+				var to = M.i.base_win.setTimeout(function(){
+					M.i.request.apply(me_obj,me_args);
+					M.i.base_win.clearTimeout(to);
+				},(options["poll_delay"] ? options["poll_delay"] : 1000));
+			}
 		}else{
 			if(!poll) M.i.start_poll(name);M.i.request.apply(me_obj,me_args);
 		}
@@ -1855,7 +1870,7 @@ M.prototype.invoke = function(method,to){
 	
 	var ins = false;
 	var sel = "";
-	var args = {};
+	var args = [];
 	
 	for(var i=0;i<arguments.length;i++) if(i > 0) args[i-1] = arguments[i];
 	args.length = arguments.length-1;
@@ -1884,7 +1899,7 @@ M.prototype.invoke_s = function(method,to){
 	
 	var ins = false;
 	var sel = "";
-	var args = {};
+	var args = [];
 	
 	for(var i=0;i<arguments.length;i++) if(i > 0) args[i-1] = arguments[i];
 	args.length = arguments.length-1;
