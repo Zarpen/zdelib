@@ -21,10 +21,10 @@ Index.prototype.show_example = function(example_id){
 					type:"jsonp",
 					id:"stock_search",
 					pfunc:function(data){if(_('#stock-inputD')) _('#stock-inputC').invoke("result",data);},
-					wrap:{key:"YAHOO",value:{util:{ScriptNodeDataSource:{callbacks:0}}},function_key:"callbacks"},
+					wrap:{key:"YAHOO",value:{util:{ScriptNodeDataSource:{callbacks:0}}},function_key:"callbacks"}
 				},
 				delay:500,
-				suggestion_columns:["symbol","name","exchDisp","typeDisp"],
+				suggestion_columns:["symbol","name","exchDisp","typeDisp"]
 			});
 			_('#stock-inputC').invoke("bind","select",function(options){
 				var symbol = options["data"].ResultSet.Result[options["item"]]["symbol"];
@@ -47,7 +47,8 @@ Index.prototype.show_example = function(example_id){
 							}
 						}
 					},
-					poll:"stock_detail_poll"
+					poll:"stock_detail_poll",
+					poll_delay:500
 				});
 			});
 		break;
