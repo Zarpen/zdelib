@@ -913,14 +913,14 @@ M.prototype.request = function(options,poll){
 	try{
 	var final_url = options["url"];
 	var type = options["type"] ? options["type"] : false;
-	var me_args = [options,true];
+	var me_args = [options,(poll ? poll+1 : 1)];
 	var me_obj = this;
 	var check_poll = function(name){
 		if(M.i.poll_exist(name)){
 			if(M.i.poll_live(name)){
-				var to = M.i.base_win.setTimeout(function(){
-					M.i.request.apply(me_obj,me_args);
-					M.i.base_win.clearTimeout(to);
+				M.i.zt.tick_on(options["poll"],function(){
+					M.i.zt.end(options["poll"]);
+					me_obj.apply(me_obj,me_args);
 				},(options["poll_delay"] ? options["poll_delay"] : 1000));
 			}
 		}else{
@@ -1068,8 +1068,24 @@ M.prototype.zt = {
 			var to = M.i.base_win.setTimeout(code,period);
 			M.i.zt.timers.push([name,to,"T"]);
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
-	end:function(name){try{for(var i=0;i<M.i.zt.timers.length;i++) if(M.i.str_cmp(name,M.i.zt.timers[i][0])) 
-		if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]); else M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
+	tick_live:function(name){
+		try{
+			var res = false;
+			for(var i=0;i<M.i.zt.timers.length;i++)  if(M.i.str_cmp(name,M.i.zt.timers[i][0])) res = true;
+			return res;
+		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	end:function(name){
+		try{
+			var remove = false;
+			for(var i=0;i<M.i.zt.timers.length;i++){
+				if(M.i.str_cmp(name,M.i.zt.timers[i][0])){
+					if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]); else M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);
+					remove = i;
+				} 	
+			}
+			if(remove) M.i.zt.timers.splice(remove,1);
+		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
 	end_intervals:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
 		if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
 	end_timeouts:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
