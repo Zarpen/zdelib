@@ -914,17 +914,41 @@ M.prototype.request = function(options,poll){
 	var final_url = options["url"];
 	var type = options["type"] ? options["type"] : false;
 	var me_args = [options,(poll ? poll+1 : 1)];
-	var me_obj = this;
-	var check_poll = function(name){
-		if(M.i.poll_exist(name)){
+	
+	var check_poll = function(poll_opts,poll_data){
+		var name = poll_opts["poll"];
+		if(M.i.poll_exist(name) && poll){
+			// poll running
 			if(M.i.poll_live(name)){
-				M.i.zt.tick_on(options["poll"],function(){
-					M.i.zt.end(options["poll"]);
-					me_obj.apply(me_obj,me_args);
-				},(options["poll_delay"] ? options["poll_delay"] : 1000));
+				M.i.zt.end(name);
+				M.i.zt.tick_on(name,function(){
+					M.i.zt.end(name);
+					poll_opts["pfunc"](poll_data);
+					M.i.request.apply(M.i.request,me_args);
+				},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+			}else{
+				// check if restart requested if not do nothing
+				if(poll == "restart"){
+					M.i.zt.end(name);
+					M.i.start_poll(name);
+					M.i.request.apply(M.i.request,me_args);
+				}
 			}
+		}else if(!M.i.poll_exist(name) && !poll){
+			// start poll
+			M.i.zt.end(name);
+			M.i.start_poll(name);
+			poll_opts["pfunc"](poll_data);
+			M.i.request.apply(M.i.request,me_args);
+		}else if(M.i.poll_exist(name)){
+			// restart poll
+			M.i.zt.end(name);
+			M.i.stop_poll(name);
+			poll_opts["pfunc"](poll_data);
+			M.i.request.apply(M.i.request,[options,"restart"]);
 		}else{
-			if(!poll) M.i.start_poll(name);M.i.request.apply(me_obj,me_args);
+			M.i.zt.end(name);
+			// stop poll requested in some point do nothing
 		}
 	}
 	
@@ -948,10 +972,9 @@ M.prototype.request = function(options,poll){
 								iterate(obj[property]);
 							}else{
 								if(property == options["wrap"]["function_key"]) obj[property] = function(data){
-									options["pfunc"](data);
 									M.i.base_win[options["wrap"]["key"]] = temp_obj;
 									if(del_tag) if(M.i.getElement(options["id"])) M.i.del(options["id"]);
-									if(options["poll"]) check_poll(options["poll"]);
+									if(options["poll"]) check_poll(options,data); else options["pfunc"](data);
 								}
 							}
 						}
@@ -961,9 +984,8 @@ M.prototype.request = function(options,poll){
 				iterate(M.i.base_win[options["wrap"]["key"]]);
 			}else{
 				M.i.jsonp_handler[options["id"]] = function(data){
-					options["pfunc"](data);
 					if(del_tag) if(M.i.getElement(options["id"])) M.i.del(options["id"]);
-					if(options["poll"]) check_poll(options["poll"]);
+					if(options["poll"]) check_poll(options,data); else options["pfunc"](data);
 				};
 			}
 		}
@@ -1065,8 +1087,12 @@ M.prototype.zt = {
 	},
 	tick_on:function(name,code,period){
 		try{
-			var to = M.i.base_win.setTimeout(code,period);
-			M.i.zt.timers.push([name,to,"T"]);
+			var found = false;
+			for(var i=0;i<M.i.zt.timers.length;i++) if(M.i.zt.timers[i][0] == name) found = true;
+			if(!found){
+				var to = M.i.base_win.setTimeout(code,period);
+				M.i.zt.timers.push([name,to,"T"]);
+			}
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
 	tick_live:function(name){
 		try{
@@ -1077,14 +1103,14 @@ M.prototype.zt = {
 	},
 	end:function(name){
 		try{
-			var remove = false;
+			var remove = [];
 			for(var i=0;i<M.i.zt.timers.length;i++){
 				if(M.i.str_cmp(name,M.i.zt.timers[i][0])){
 					if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]); else M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);
-					remove = i;
+					remove.push(i);
 				} 	
 			}
-			if(remove) M.i.zt.timers.splice(remove,1);
+			if(remove.length > 0) for(var i=remove.length;i>=0;i--) M.i.zt.timers.splice(remove[i],1);
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
 	end_intervals:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
 		if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},

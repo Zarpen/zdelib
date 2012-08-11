@@ -48,7 +48,7 @@ Index.prototype.show_example = function(example_id){
 						}
 					},
 					poll:"stock_detail_poll",
-					poll_delay:500
+					poll_delay:1000
 				});
 			});
 		break;
