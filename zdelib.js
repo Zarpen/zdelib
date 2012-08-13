@@ -913,39 +913,39 @@ M.prototype.request = function(options,poll){
 	try{
 	var final_url = options["url"];
 	var type = options["type"] ? options["type"] : false;
-	var me_args = [options,(poll ? poll+1 : 1)];
 	
 	var check_poll = function(poll_opts,poll_data){
 		var name = poll_opts["poll"];
 		if(M.i.poll_exist(name) && poll){
 			// poll running
-			if(M.i.poll_live(name)){
-				M.i.zt.end(name);
-				M.i.zt.tick_on(name,function(){
+			if(poll != "restart"){
+				if(M.i.poll_live(name)){
+					M.i.zt.tick_on(name,function(){
+						M.i.zt.end(name);
+						poll_opts["pfunc"](poll_data);
+						M.i.request.apply(M.i.request,[poll_opts,poll+1]);
+					},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+				}else{
 					M.i.zt.end(name);
-					poll_opts["pfunc"](poll_data);
-					M.i.request.apply(M.i.request,me_args);
-				},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
-			}else{
-				// check if restart requested if not do nothing
-				if(poll == "restart"){
+				}
+			}else{	
+				M.i.zt.tick_on(name+"_restart",function(){
 					M.i.zt.end(name);
 					M.i.start_poll(name);
-					M.i.request.apply(M.i.request,me_args);
-				}
+					M.i.request.apply(M.i.request,[poll_opts,1]);
+				},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
 			}
 		}else if(!M.i.poll_exist(name) && !poll){
 			// start poll
 			M.i.zt.end(name);
 			M.i.start_poll(name);
 			poll_opts["pfunc"](poll_data);
-			M.i.request.apply(M.i.request,me_args);
+			M.i.request.apply(M.i.request,[poll_opts,1]);
 		}else if(M.i.poll_exist(name)){
 			// restart poll
 			M.i.zt.end(name);
 			M.i.stop_poll(name);
-			poll_opts["pfunc"](poll_data);
-			M.i.request.apply(M.i.request,[options,"restart"]);
+			M.i.request.apply(M.i.request,[poll_opts,"restart"]);
 		}else{
 			M.i.zt.end(name);
 			// stop poll requested in some point do nothing

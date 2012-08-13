@@ -54,6 +54,7 @@ Index.prototype.show_example = function(example_id){
 					poll_delay:500
 				});
 			});
+			_("#panel-centerC").addm("<div id='poll_test' ></div>");
 		break;
 	}
 }
