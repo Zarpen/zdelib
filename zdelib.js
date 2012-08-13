@@ -682,7 +682,7 @@ M.prototype.addm = function(data,to){
 		content = content.substr(temp);
 		temp = "";
 		for(var j=0;j<content.length;j++){if(temp.search(tags[i+1]) >= 0){temp = temp.replace(tags[i+1],"");content = content.substr(temp.length);break;}else{temp = temp+content.charAt(j);}}
-		if(temp == "&nbsp;") temp = "\u00A0";
+		temp = temp.replace(/&nbsp;/gi,"\u00A0");
 		if(temp.match(regexp)) temp = false; 
 		
 		if(tags[i].match(/</).length < 2 && tags[i].search("</") >= 0){
