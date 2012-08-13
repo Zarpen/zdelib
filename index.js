@@ -5,15 +5,16 @@ Index.prototype.show_example = function(example_id){
 	if(_("#stock-inputD")) _("#stock-inputC")._unclass();
 	_().clear_poll();
 	
+	_("#panel-centerC").set_sty("visibility:visible;");
 	_("#panel-centerC").clear();
 	
 	switch(example_id){
 		case "tip-example":
-			_("#panel-centerC").addm("<form><table><tr><td>Name: </td><td><input title='Enter your Name' /></td></tr><tr>\
-				<td colspan='2'>&nbsp;</td></tr><tr><td>Last Name: </td><td><input title='Enter your Last Name' /></td></tr></table></form>").nav("|td > |inputC")._class("Infotip");
+			_("#panel-centerC").addm("<form><table><tr><td>Name:&nbsp;&nbsp;</td><td><input title='Enter your Name' /></td></tr><tr>\
+				<td colspan='2'>&nbsp;</td></tr><tr><td>Last Name:&nbsp;&nbsp;</td><td><input title='Enter your Last Name' /></td></tr></table></form>").nav("|td > |inputC")._class("Infotip");
 		break;
 		case "stock-example":
-			_("#panel-centerC").addm("<form><table><tr><td>Search Stock</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)</td></tr></table></form>");
+			_("#panel-centerC").addm("<form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)</td></tr></table></form>");
 			_("#stock-inputC")._class("Qsearch",null,{
 				ajax:{
 					url:"http://d.yimg.com/aq/autoc?query=$&region=ES&lang=es-ES",
@@ -51,7 +52,7 @@ Index.prototype.show_example = function(example_id){
 						}
 					},
 					poll:"stock_detail_poll",
-					poll_delay:500
+					poll_delay:1000
 				});
 			});
 			_("#panel-centerC").addm("<div id='poll_test' ></div>");
@@ -73,4 +74,6 @@ _().load(function(){
 		+"<div id='panel-center' class='panel-center' style='float:left' ></div><div id='panel-right' style='float:left' class='panel-right' ></div><div style='float:none;clear:both' ></div><div id='footer' class='footer' ></div></div>");
 		
 	_("#examples-list > |li > |aC").add_event("click",{"func":function(){_("|bodyC").invoke("show_example",this.id);},"capture":true});
+	
+	_("#panel-centerC").set_sty("visibility:hidden;");
 });
