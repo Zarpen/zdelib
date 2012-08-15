@@ -939,9 +939,11 @@ M.prototype.request = function(options,poll){
 			if(poll != "restart"){
 				if(M.i.poll_live(name)){
 					M.i.zt.tick_on(name,function(){
-						M.i.zt.end(name);
-						poll_opts["pfunc"](poll_data);
-						M.i.request.apply(M.i.request,[poll_opts,poll+1]);
+						M.i.zt.end(name);					
+						if(!M.i.zt.tick_live(name+"_restart")){
+							poll_opts["pfunc"](poll_data);
+							M.i.request.apply(M.i.request,[poll_opts,poll+1]);
+						}
 					},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
 				}else{
 					M.i.zt.end(name);
@@ -949,6 +951,7 @@ M.prototype.request = function(options,poll){
 			}else{	
 				M.i.zt.tick_on(name+"_restart",function(){
 					M.i.zt.end(name);
+					M.i.zt.end(name+"_restart");
 					M.i.start_poll(name);
 					M.i.request.apply(M.i.request,[poll_opts,1]);
 				},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));

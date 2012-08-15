@@ -38,20 +38,22 @@ Index.prototype.show_example = function(example_id){
 					pfunc:function(json){
 						_().hide_wait_msg("stock-detail-loading");
 						if(_().poll_live("stock_detail_poll")){
-							var quote = json.query.results.quote;
-							if(_("#quote_detailD")){
-								for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
-							}else{
-								_("#panel-centerC").addm("<table id='quote_detail' class='quote-detail' ></table>");
-								var max_columns = 3;
-								var td_count = 0,tr_count = 0;
-								_("#quote_detailC").add("tr");
-								for(key in quote){
-									_("#quote_detail > |tbody > |trC").ix(tr_count).add("td",key,{text:key+": "+quote[key],sty:"paddingRight:10px;"});
-									td_count++;
-									if(td_count >= max_columns){_("#quote_detailC").add("tr");td_count = 0;tr_count++;}
+							try{
+								var quote = json.query.results.quote;
+								if(_("#quote_detailD")){
+									for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
+								}else{
+									_("#panel-centerC").addm("<table id='quote_detail' class='quote-detail' ></table>");
+									var max_columns = 3;
+									var td_count = 0,tr_count = 0;
+									_("#quote_detailC").add("tr");
+									for(key in quote){
+										_("#quote_detail > |tbody > |trC").ix(tr_count).add("td",key,{text:key+": "+quote[key],sty:"paddingRight:10px;"});
+										td_count++;
+										if(td_count >= max_columns){_("#quote_detailC").add("tr");td_count = 0;tr_count++;}
+									}
 								}
-							}
+							}catch(e){}
 						}
 					},
 					poll:"stock_detail_poll",
