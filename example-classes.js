@@ -77,12 +77,15 @@ Qsearch.prototype.search = function(){
 			if(me.last_search.abort) me.last_search.abort();
 		}
 		final_params.url = final_params.url.replace("$",me.focus.value);
+		_().show_wait_msg({name:"Qsearch_"+me.focus.id+"_loading",img:{attr:"border=0;alt=loading;src=resources/img/loading.gif"}},_().gparent(me.focus));
 		_().request(final_params);
 	},me.delay,me)();
 }
 Qsearch.prototype.result = function(json){
 	var me = this;
 	var counter = 0;
+	// hide loading gif
+	_().hide_wait_msg("Qsearch_"+me.focus.id+"_loading");
 	// response as json type
 	var pos = _(me.focus).get_pos(null,true);
 	pos[1] = pos[1]+me.focus.offsetHeight;

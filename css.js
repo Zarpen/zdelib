@@ -6,7 +6,7 @@ _().load(function(){
 			["input","display:inline-block;border:2px solid #ff5353;background-color:#97ff86;"],
 			["input:focus","background-color:white;"],
 			[".container","width:100%;height:100%"],
-			[".header","width:100%;"],
+			[".header","width:100%;background-color:white;margin-bottom:1%;"],
 			[".panel-left","width:15%;margin:1%;padding:1%;-moz-border-radius: 15px;border-radius: 15px;border:3px solid black;background-color:white;"],
 			[".panel-center","width:55%;padding:1%;margin:1%;-moz-border-radius: 15px;border-radius: 15px;background-color:white;"],
 			[".panel-right","width:15%;padding:2%;"],
