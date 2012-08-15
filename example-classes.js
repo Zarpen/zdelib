@@ -29,6 +29,7 @@ Infotip.prototype._delete = function(){
 	_().del_event("mousemove",{"func":me.show,"capture":true},me.focus);
 	_().del_event("mouseout",{"func":me.hide,"capture":true},me.focus);
 	me.focus.title = me.title;
+	_("|body > [title="+me.title+"_tip]C").del();
 }
 /* QSEARCH CLASS*/
 function Qsearch(args){
