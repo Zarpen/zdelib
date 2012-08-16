@@ -931,6 +931,8 @@ M.prototype.request = function(options,poll){
 	try{
 	var final_url = options["url"];
 	var type = options["type"] ? options["type"] : false;
+	// some timeouts can call before restart due to javascript engine not fast enought, try to restart the poll on the request call init
+	if(options["poll"] && !poll) M.i.poll_restart(options["poll"]);
 	
 	var check_poll = function(poll_opts,poll_data){
 		var name = poll_opts["poll"];
@@ -938,23 +940,31 @@ M.prototype.request = function(options,poll){
 			// poll running
 			if(poll != "restart"){
 				if(M.i.poll_live(name)){
-					M.i.zt.tick_on(name,function(){
-						M.i.zt.end(name);					
-						if(!M.i.zt.tick_live(name+"_restart")){
-							poll_opts["pfunc"](poll_data);
-							M.i.request.apply(M.i.request,[poll_opts,poll+1]);
-						}
-					},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+					if(!M.i.zt.tick_live(name)){
+						M.i.zt.tick_on(name,function(){
+							M.i.update_poll(name);
+							if(M.i.poll_count(name) == poll && M.i.poll_live(name)){					
+								if(!M.i.zt.tick_live(name+"_restart")){
+									M.i.zt.end(name);
+									poll_opts["pfunc"](poll_data);
+									M.i.request.apply(M.i.request,[poll_opts,poll+1]);
+								}
+							}
+						},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+					}
 				}else{
 					M.i.zt.end(name);
 				}
 			}else{	
-				M.i.zt.tick_on(name+"_restart",function(){
-					M.i.zt.end(name);
-					M.i.zt.end(name+"_restart");
-					M.i.start_poll(name);
-					M.i.request.apply(M.i.request,[poll_opts,1]);
-				},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+				if(!M.i.zt.tick_live(name+"_restart")){
+					M.i.zt.tick_on(name+"_restart",function(){
+						M.i.zt.end(name);
+						M.i.zt.end(name+"_restart");
+						M.i.start_poll(name);
+						poll_opts["pfunc"](poll_data);
+						M.i.request.apply(M.i.request,[poll_opts,1]);
+					},(poll_opts["poll_delay"] ? poll_opts["poll_delay"] : 1000));
+				}
 			}
 		}else if(!M.i.poll_exist(name) && !poll){
 			// start poll
@@ -965,7 +975,9 @@ M.prototype.request = function(options,poll){
 		}else if(M.i.poll_exist(name)){
 			// restart poll
 			M.i.zt.end(name);
+			poll_opts["pfunc"](poll_data);
 			M.i.stop_poll(name);
+			M.i.poll_restart(name);
 			M.i.request.apply(M.i.request,[poll_opts,"restart"]);
 		}else{
 			M.i.zt.end(name);
@@ -1656,7 +1668,7 @@ M.prototype.poll_exist = function(name){
 M.prototype.start_poll = function(name){
 	try{var found = false;
 	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = i;
-	if(found === false) M.i.poll_request.push([name,true]); else M.i.poll_request[found][1] = true;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	if(found === false) M.i.poll_request.push([name,true,0]); else M.i.poll_request[found][1] = true;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.stop_poll = function(name){
 	try{var found = false;
@@ -1666,6 +1678,21 @@ M.prototype.stop_poll = function(name){
 M.prototype.poll_live = function(name){
 	try{var found = false;
 	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = M.i.poll_request[i][1];
+	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.update_poll = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) M.i.poll_request[i][2] = M.i.poll_request[i][2] >= 0 ? M.i.poll_request[i][2]+1 : 0;
+	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.poll_count = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name) found = M.i.poll_request[i][2];
+	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.poll_restart = function(name){
+	try{var found = false;
+	for(var i=0;i<M.i.poll_request.length;i++) if(M.i.poll_request[i][0] == name){ M.i.poll_request[i][2] = 0;found = true;}
 	return found;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.clear_poll = function(){
@@ -1707,8 +1734,8 @@ M.prototype.error = function(err,arg){
 	var win_size = new Array(M.i.base_win.innerWidth ? M.i.base_win.innerWidth : M.i.base_doc.getElementsByTagName("html")[0].offsetWidth,
 		M.i.base_win.innerHeight ? M.i.base_win.innerHeight : M.i.base_doc.getElementsByTagName("html")[0].offsetHeight);
 		
-	var maximize = 'var e = document.getElementById("zdlib_log");if(e.style.width == "300px"){e.style.left = 0;e.style.right = "auto";e.style.width = "'+win_size[0]+'";\
-		e.style.height = "'+win_size[1]+'";}else{e.style.right = 0;e.style.left = "auto";e.style.width = "300px";e.style.height = "300px"}';
+	var maximize = 'var e = document.getElementById("zdlib_log");if(e.style.width == "300px"){e.style.left = 0;e.style.right = "auto";e.style.width = "'+win_size[0]+'px";\
+		e.style.height = "'+win_size[1]+'px";}else{e.style.right = 0;e.style.left = "auto";e.style.width = "300px";e.style.height = "300px"}';
 	
 	msg.style.color = "red";
 	
@@ -1817,6 +1844,8 @@ M.prototype.z_selector = function(path){
 			}
 		}
 	}
+	
+	path_result = path_result.length != "undefined" && path_result.length < 1 ? false : path_result;
 	return path_result;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 // extend static like function to main semi-singleton function
