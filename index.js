@@ -36,9 +36,9 @@ Index.prototype.show_example = function(example_id){
 					type:"jsonp",
 					id:"stock_detail",
 					pfunc:function(json){
-						_().hide_wait_msg("stock-detail-loading");
-						if(_().poll_live("stock_detail_poll")){
+						//if(_().poll_live("stock_detail_poll")){
 							try{
+								_().hide_wait_msg("stock-detail-loading");
 								var quote = json.query.results.quote;
 								if(_("#quote_detailD")){
 									for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
@@ -53,8 +53,11 @@ Index.prototype.show_example = function(example_id){
 										if(td_count >= max_columns){_("#quote_detailC").add("tr");td_count = 0;tr_count++;}
 									}
 								}
-							}catch(e){}
-						}
+							}catch(e){
+								if(!_("#quote_detailD")) 
+									_("#panel-centerC").show_wait_msg({name:"stock-detail-loading",img:{attr:"border=0;alt=loading;src=resources/img/loading.gif"},container:{sty:"padding:1%;"}});
+							}
+						//}
 					},
 					poll:"stock_detail_poll",
 					poll_delay:1000

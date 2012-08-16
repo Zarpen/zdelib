@@ -14,7 +14,7 @@ Infotip.prototype.show = function(e){
 	_().cancel_event(e);
 	var me = this;
 	var select = "|body > [title="+me.title+"_tip]";
-	if(_(select+"D").length < 1){_("|bodyC").add("div","",{"attr":"class=info-tip;title="+me.title+"_tip;","text":me.title,"sty":"display:none;"});
+	if(!_(select+"D")){_("|bodyC").add("div","",{"attr":"class=info-tip;title="+me.title+"_tip;","text":me.title,"sty":"display:none;"});
 	_(select+"C").set_sty("position:absolute;left:"+(_().event_pos(e)[0]+10)+"px;top:"+(_().event_pos(e)[1]+10)+"px;zIndex:100;display:block;");}else{
 		_(select+"C").set_sty("position:absolute;left:"+(_().event_pos(e)[0]+10)+"px;top:"+(_().event_pos(e)[1]+10)+"px;display:block;");}
 }
