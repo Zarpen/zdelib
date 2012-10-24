@@ -3,6 +3,8 @@ function Index(){}
 Index.prototype.show_example = function(example_id){
 	if(_("|td>|inputD")) _("|td > |inputC")._unclass();
 	if(_("#stock-inputD")) _("#stock-inputC")._unclass();
+	if(_("#date-input-startD")) _("#date-input-startC")._unclass();
+	if(_("#date-input-endD")) _("#date-input-endC")._unclass();
 	_().clear_poll();
 	
 	_("#panel-centerC").set_sty("visibility:visible;");
@@ -63,9 +65,11 @@ Index.prototype.show_example = function(example_id){
 					poll_delay:1000
 				});
 			});
-			_("#panel-centerC").addm("<div id='poll_test' ></div>");
-		case "social-example":
-			
+		break;	
+		case "calendar-example":
+			_("#panel-centerC").addm("<form><table><tr><td>Select Start Date:</td><td><input id='date-input-start' type='text' size='10' /></td>"+
+			"<td>&nbsp;&nbsp;&nbsp;&nbsp;Select End Date:</td><td><input id='date-input-end' type='text' size='10' /></td></tr></table></form>")
+			.nav("#date-input-startC")._class("Calendar").nav("#date-input-endC")._class("Calendar");
 		break;
 		break;
 	}
@@ -76,6 +80,7 @@ _().load(function(){
 	_().add_class("Index",Index);
 	_().add_class("Infotip",Infotip);
 	_().add_class("Qsearch",Qsearch);
+	_().add_class("Calendar",Calendar);
 	
 	_("|bodyC")._class("Index");
 	
@@ -83,7 +88,7 @@ _().load(function(){
 		+"<div id='panel-left' class='panel-left' style='float:left' ><ul id='examples-list' class='menu-list' >"
 		+"<li><a id='tip-example' href='#'>Simple tip example</a></li>"
 		+"<li><a id='stock-example' href='#'>Stock search example</a></li>"
-		+"<li><a id='social-example' href='#'>Social example</a></li></ul></div>"
+		+"<li><a id='calendar-example' href='#'>Calendar example</a></li></ul></div>"
 		+"<div id='panel-center' class='panel-center' style='float:left' ></div><div id='panel-right' style='float:left' class='panel-right' ></div><div style='float:none;clear:both' ></div><div id='footer' class='footer' ></div></div>");
 		
 	_("#examples-list > |li > |aC").add_event("click",{"func":function(){_("|bodyC").invoke("show_example",this.id);},"capture":true});
