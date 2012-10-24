@@ -12,6 +12,14 @@ the intention to provide a minimum class extension for allowing the user to buil
 based on its capabilities. Some graphics/multimedia functions (maybe htm5) are intended to be added to the
 library in the future.
 
+Examples
+
+You can see some basic examples at http://zarpen.github.com/zdelib/
+
+Manual
+
+The full manual is developing even apologize for the inconvenience
+
 License
 
 See MIT license information on LICENSE.txt

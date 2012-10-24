@@ -290,7 +290,7 @@ M.prototype.iter = function(func,elements){
 }
 M.prototype.add_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
 	var func = function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);};
 	if (element.attachEvent) element.attachEvent('on' + event,func);
 	else element.addEventListener(event,func,options["capture"]);
@@ -299,7 +299,7 @@ M.prototype.add_event = function(event,options,to){
 }
 M.prototype.del_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
 	var func = false;
 	for(var i=0;i<M.i.bind_events.length;i++) if(M.i.bind_events[i][0] === element && M.i.bind_events[i][1].toString() == options["func"].toString() && M.i.bind_events[i][3] == event) func = i;
 	if(element.removeEventListener) element.removeEventListener(event,func ? M.i.bind_events[func][2] : function(){},options["capture"]); else element.detachEvent("on"+event,func ? M.i.bind_events[func][2] : function(){});
@@ -317,7 +317,7 @@ M.prototype.cancel_event = function(e){
 }
 M.prototype.fire_event = function(event_name,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.fire_event(event_name,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.fire_event(event_name,item);},element);
 	
 	var event;
 
@@ -348,7 +348,7 @@ M.prototype.fire_event = function(event_name,to){
 }
 M.prototype.set_attr = function(attr_str,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.set_attr(attr_str,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.set_attr(attr_str,item);},element);
 	
 	var temp,name = element.id,vector = attr_str.split(';'),st,stval,pos;
 	if(attr_str.search(/type/i) != -1 && (element.tagName == "input" || element.tagName == "INPUT") && element.parentNode){
@@ -389,7 +389,7 @@ M.prototype.set_attr = function(attr_str,to){
 }
 M.prototype.get_attr = function(attr_name,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length){
+	if(element instanceof Array){
 		var res_array = [];
 		M.i.iter(function(item,index){res_array.push(M.i.get_attr(attr_name,item));},element);
 		return res_array;
@@ -402,13 +402,13 @@ M.prototype.get_attr = function(attr_name,to){
 }
 M.prototype.del_attr = function(attr_name,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.del_attr(attr_name,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.del_attr(attr_name,item);},element);
 	element.removeAttribute(attr_name);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.set_sty = function(sty_str,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.set_sty(sty_str,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.set_sty(sty_str,item);},element);
 	var vector = sty_str.split(';'),st,stval,pos;
 	for(var i=0;i<vector.length;i++){
 		pos = vector[i].indexOf(':',0);
@@ -426,7 +426,7 @@ M.prototype.get_sty = function(sty_name,to,numeric){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	var final_sty = sty_name;
 	var sty_val;
-	if(element.length){
+	if(element instanceof Array){
 		var res_array = [];
 		M.i.iter(function(item,index){res_array.push(M.i.get_sty(sty_name,item));},element);
 		return res_array;
@@ -452,7 +452,7 @@ M.prototype.get_sty = function(sty_name,to,numeric){
 }
 M.prototype.del_sty = function(sty_name,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.del_sty(sty_name,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.del_sty(sty_name,item);},element);
 	element.style[sty_name] = '';
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
@@ -595,9 +595,9 @@ M.prototype.create = function(type,name,options){
 }
 M.prototype.append = function(node,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.append(node,item);},element);
-	var final_element;
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.append(node,item);},element);
 	if(node.tagName == "tr" || node.tagName == "TR"){ 
+		var final_element;
 		if(element.tagName == "table" || element.tagName == "TABLE"){ 
 			if(element.tBodies.length <= 0){
 				M.i.add("tbody","","",element);
@@ -606,20 +606,22 @@ M.prototype.append = function(node,to){
 				final_element = element.tBodies[element.tBodies.length-1];
 			} 
 		}
+		if(final_element) final_element.appendChild(node); else element.appendChild(node);
+	}else{
+		element.appendChild(node);
 	}
-	if(final_element) final_element.appendChild(node); else element.appendChild(node);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.add = function(type,name,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.add(type,name,options,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.add(type,name,options,item);},element);
 	var new_node = M.i.create(type,name,options);
 	M.i.append(new_node,element);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.addm = function(data,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.addm(data,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.addm(data,item);},element);
 	
 	var regexp = /<(.|\n)*?>/g;
 	//var regexp_close = /<\s*\/\s*\w\s*.*?>|<\s*br\s*>/g;
@@ -735,7 +737,7 @@ M.prototype.addm = function(data,to){
 M.prototype.del = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element){
-		if(element.length) return M.i.iter(function(item,index){M.i.del(item);},element);
+		if(element instanceof Array) return M.i.iter(function(item,index){M.i.del(item);},element);
 		if(element.Z_META_DATA){
 			M.i.obj_unreg(element);
 		}else{
@@ -751,40 +753,46 @@ M.prototype.del = function(to){
 }
 M.prototype.replace = function(newn,oldn){
 	try{var element = oldn != undefined && oldn != null ? M.i.getElement(oldn) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.replace(newn,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.replace(newn,item);},element);
 	element.parentNode.replaceChild(element,M.i.getElement(newn));
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.move =function(target,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.move(target,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.move(target,item);},element);
 	var node = target.parentNode ? target.parentNode.removeChild(target) : target;
 	element.appendChild(node);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.clear = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.clear(item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.clear(item);},element);
 	for(var i=element.childNodes.length-1;i>=0;i--) element.removeChild(element.childNodes[i]);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.addText = function(text,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.addText(text,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.addText(text,item);},element);
 	var text_node = M.i.base_doc.createTextNode(text);
 	M.i.append(text_node,element);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.setText = function(text,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.setText(text,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.setText(text,item);},element);
 	for(var i=0;i<element.childNodes.length;i++) if(element.childNodes[i].nodeType == 3) element.removeChild(element.childNodes[i]);
 	M.i.addText(text,element);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
+M.prototype.getText = function(to){
+	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
+	var res = [];
+	for(var i=0;i<element.childNodes.length;i++) if(element.childNodes[i].nodeType == 3) res.push(element.childNodes[i].nodeValue);
+	return res.join("");}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
 M.prototype.html = function(html,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.html(html,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.html(html,item);},element);
 	element.innerHTML = html;
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
@@ -829,7 +837,7 @@ M.prototype.get_size = function(comienzo){
 // get position and widths for elements already attached to dom tree
 M.prototype.get_pos = function(to,scroll){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length){
+	if(element instanceof Array){
 		var res_array = [];
 		M.i.iter(function(item,index){res_array.push(M.i.get_pos(item,scroll));},element);
 		return res_array;
@@ -850,7 +858,7 @@ M.prototype.get_pos = function(to,scroll){
 // set dimensions to element
 M.prototype.set_pos = function(dim,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.set_pos(dim,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.set_pos(dim,item);},element);
 	
 	element.style.left = isNaN(dim[0]) ? dim[0] : dim[0]+"px";
 	element.style.top = isNaN(dim[1]) ? dim[1] : dim[1]+"px";
@@ -860,7 +868,7 @@ M.prototype.set_pos = function(dim,to){
 }
 M.prototype.center = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.center(item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.center(item);},element);
 	
 	var pos = M.i.get_pos(element);
 	var left = M.i.win_size()[0];
@@ -875,7 +883,7 @@ M.prototype.center = function(to){
 }
 M.prototype.wrap = function(type,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.wrap(item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.wrap(item);},element);
 	
 	var parent = element.parentNode ? element.parentNode : M.i.base_doc.body;
 	var node = parent.removeChild(element);
@@ -887,7 +895,7 @@ M.prototype.wrap = function(type,to){
 }
 M.prototype.unwrap = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.unwrap(item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.unwrap(item);},element);
 	
 	if(element.parentNode){
 		var grand_parent = element.parentNode.parentNode ? element.parentNode.parentNode : M.i.base_doc.body;
@@ -1210,14 +1218,14 @@ M.prototype.zt = {
 		}
 		return new Array(d,m,y);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 	},
-	week_day:function(m,y){
-		try{var c = 0,total_dias = 0,comienzo_mes = 0;
-		for(var i=0;i<=y;i++)  if(leap_year(i)) c++;
-		total_dias = (365*y)+c;
-		for(var i=12;i >= m;i--) total_dias = total_dias - M.i.zt.month_days(i,y);
-		comienzo_mes = total_dias%7 == 0 ? 6 : total_dias%7;
-		comienzo_mes = leap_year(y) ? comienzo_mes : comienzo_mes-1;
-		return comienzo_mes;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	week_day:function(d,m,y){
+		try{
+			var dt = M.i.zt.d();
+			dt.setYear(y);
+			dt.setMonth(m-1);
+			dt.setDate(d);
+			return dt.getDay();
+		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 	},
 	print_fdate:function(){ 
 		return M.i.zt.d().toLocaleString();
@@ -1269,7 +1277,7 @@ M.prototype.zg = {
 	},
 	put:function(x,y,w,h,scroll,to){
 		try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-		if(element.length) return M.i.iter(function(item,index){M.i.zg.put(x,y,w,h,scroll,item);},element);
+		if(element instanceof Array) return M.i.iter(function(item,index){M.i.zg.put(x,y,w,h,scroll,item);},element);
 		var obj_pos = M.i.get_pos(element);
 		var obj = M.i.is_reg(element) ? M.i.get_obj(element) : M.i.obj_reg("ZG",element);
 		var sc = M.i.win_scroll();
@@ -1282,7 +1290,7 @@ M.prototype.zg = {
 	},
 	rotate_2d:function(degree,to){
 		try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-		if(element.length) return M.i.iter(function(item,index){M.i.zg.rotate_2d(degree,item);},element);
+		if(element instanceof Array) return M.i.iter(function(item,index){M.i.zg.rotate_2d(degree,item);},element);
 		var rad = M.i.zm.deg_rad(degree);
 		var obj = M.i.is_reg(element) ? M.i.get_obj(element) : M.i.obj_reg("ZG",element);
 		obj.Z_META_DATA.rotation_2d = obj.Z_META_DATA.rotation_2d ? obj.Z_META_DATA.rotation_2d + degree : degree;
@@ -1349,7 +1357,7 @@ M.prototype.event_pos = function(e){
 // UI FUNCTIONS
 M.prototype.drag = function(limits,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.drag(limits,item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.drag(limits,item);},element);
 	
 	M.i.obj_reg("drag",element);
 	var obj = M.i.get_obj(element);
@@ -1378,7 +1386,7 @@ M.prototype.drag = function(limits,to){
 }
 M.prototype.undrag = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i.undrag(item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.undrag(item);},element);
 	
 	var obj = M.i.get_obj(element);
 	element.style = obj.style;
@@ -1411,6 +1419,44 @@ M.prototype.hide_wait_msg = function(name){
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 // COMMON JS FUNCTIONS
+M.prototype.val = function(value,check,to){
+	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.val(value,item);},element);
+	var final_val = false;
+	switch(element.tagName.toUpperCase()){
+		case "INPUT":
+			if(check != "undefined") element.checked = check;
+			if(value){
+				element.value = value;
+			}else{
+				final_val = element.value;
+			}
+			break;
+		case "SELECT":
+			if(!value){
+				if(element.multiple){
+					var res = [];
+					for(var i=0;i<element.options.length;i++) if(element.options[i].selected) res.push(element.options[i].value);
+					final_val = res;
+				}else{
+					for(var i=0;i<element.options.length;i++) if(i == element.selectedIndex || element.options[i].selected) final_val = element.options[i].value;
+				}
+			}else{
+				if(value.length != "undefined" && value.length > 1){
+					for(var i=0;i<element.options.length;i++) for(var j=0;j<value.length;j++) if(element.options[i].value == value[j]) element.options[i].selected = true;
+				}else{
+					for(var i=0;i<element.options.length;i++) if(element.options[i].value == value) element.selectedIndex = i;
+				}
+			}
+			break;
+		case "TEXTAREA":
+			if(value) M.i.setText(value,element); else final_val = M.i.getText(element);
+			break;
+	}
+	final_val = !isNaN(final_val) ? (final_val != Math.floor(final_val) ? parseFloat(final_val) : parseInt(final_val)): final_val;
+	return final_val;
+	}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
 M.prototype.in_array = function(val,subject){
 	try{var res = false;
 	for(var i=0;i<subject.length;i++) if(subject[i] === val) res = true;
@@ -1702,6 +1748,12 @@ M.prototype.clear_poll = function(){
 M.prototype.nav = function(i){
 	try{M.i.me = false;if(isNaN(i)){
 		M.i.me = M.i.getElement(i);
+		// if not found try assuming op char pass true
+		if(!M.i.me){
+			var op_char = i.charAt(i.length-1);
+			var name = i.slice(0,i.length-1);
+			if(M.i.in_array(op_char,["C","D","O"])) M.i.me = M.i.getElement(name);
+		}
 		M.i.nav_reg.push(M.i.me);
 		M.i.selector = i;
 	}else{
@@ -1736,6 +1788,8 @@ M.prototype.error = function(err,arg){
 		
 	var maximize = 'var e = document.getElementById("zdlib_log");if(e.style.width == "300px"){e.style.left = 0;e.style.right = "auto";e.style.width = "'+win_size[0]+'px";\
 		e.style.height = "'+win_size[1]+'px";}else{e.style.right = 0;e.style.left = "auto";e.style.width = "300px";e.style.height = "300px"}';
+	
+	var clear = 'var e = document.getElementById("zdlib_log");for(var i=e.childNodes.length;i >= 1;i--) if(e.childNodes[i]) e.removeChild(e.childNodes[i]);';
 	
 	msg.style.color = "red";
 	
@@ -1785,7 +1839,7 @@ M.prototype.error = function(err,arg){
 		log.style.height = "300px";
 		log.style.overflow = "scroll";
 		log.style.zIndex = 1000;
-		log.innerHTML = "<p style='background-color:white;'><a href='#'>C</a>&nbsp;<a href='#' onclick='"+background+"'>B</a>&nbsp;<a href='#' onclick='"+maximize+"'>M</a></p>";
+		log.innerHTML = "<p style='background-color:white;'><a href='#' onclick='"+clear+"'>C</a>&nbsp;<a href='#' onclick='"+background+"'>B</a>&nbsp;<a href='#' onclick='"+maximize+"'>M</a></p>";
 		log.appendChild(msg);
 		M.i.base_doc.body.appendChild(log);
 	}}catch(e){}
@@ -1871,37 +1925,39 @@ M.prototype.implement = function(class_name,impc_name){
 }
 M.prototype._class = function(class_name,to,args){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element.length) return M.i.iter(function(item,index){M.i._class(class_name,item,args);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i._class(class_name,item,args);},element);
+	var selector = M.i.selector;
 	
-	if(!M.i.class_instances[M.i.selector]){
+	if(!M.i.class_instances[selector]){
 		if(!M.i._is_class(element)){
-			M.i.class_instances[M.i.selector] = [class_name,[]];
+			M.i.class_instances[selector] = [class_name,[]];
 			var final_args = args ? args : {};
 			final_args.focus = element;
-			final_args.selector = M.i.selector;
+			final_args.selector = selector;
 			var cobj = new M.prototype[class_name](final_args);
 			cobj.prototype = M.prototype[class_name].prototype;
 			// attach node to class
-			M.i.class_instances[M.i.selector][1].push(cobj);
+			M.i.class_instances[selector][1].push(cobj);
 		}
 	}else{
 		if(!M.i._is_class(element)){
 			var final_args = args ? args : {};
 			final_args.focus = element;
-			final_args.selector = M.i.selector;
+			final_args.selector = selector;
 			var cobj = new M.prototype[class_name](final_args);
 			cobj.prototype = M.prototype[class_name].prototype;
-			M.i.class_instances[M.i.selector][1].push(cobj);
+			M.i.class_instances[selector][1].push(cobj);
 		}
 	}
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype._unclass = function(to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
+	var selector = M.i.selector;
 	
 	var ins = false;
 	var sel = "";
-	if(M.i.class_instances[M.i.selector]){ins = M.i.class_instances[M.i.selector][1];sel = M.i.selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
+	if(M.i.class_instances[selector]){ins = M.i.class_instances[selector][1];sel = selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
 	if(ins){
 		for(var i=ins.length-1;i >= 0;i--){
 			ins[i].prototype.focus = null;
@@ -1913,7 +1969,7 @@ M.prototype._unclass = function(to){
 		M.i.class_instances[sel] = false;
 		delete M.i.class_instances[sel];
 	}else{
-		if(element.length){
+		if(element instanceof Array){
 			return M.i.iter(function(item,index){
 				var found = M.i._is_class(item);
 				if(found){
@@ -1983,10 +2039,11 @@ M.prototype.invoke = function(method,to){
 	var ins = false;
 	var sel = "";
 	var args = [];
+	var selector = M.i.selector;
 	
 	for(var i=0;i<arguments.length;i++) if(i > 0) args[i-1] = arguments[i];
 	args.length = arguments.length-1;
-	if(M.i.class_instances[M.i.selector]){ins = M.i.class_instances[M.i.selector][1];sel = M.i.selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
+	if(M.i.class_instances[selector]){ins = M.i.class_instances[selector][1];sel = selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
 	if(ins){
 		if(ins.length == 1){
 			return ins[0][method].apply(ins[0],args);
@@ -1994,7 +2051,7 @@ M.prototype.invoke = function(method,to){
 			for(var i=0;i<ins.length;i++) ins[i][method].apply(ins[i],args);
 		}
 	}else{
-		if(element.length){
+		if(element instanceof Array){
 			return M.i.iter(function(item,index){
 				var res = M.i._is_class(item);
 				if(res) M.i.class_instances[res[0]][res[1]][method].apply(ins[i],args);
@@ -2012,10 +2069,11 @@ M.prototype.invoke_s = function(method,to){
 	var ins = false;
 	var sel = "";
 	var args = [];
+	var selector = M.i.selector;
 	
 	for(var i=0;i<arguments.length;i++) if(i > 0) args[i-1] = arguments[i];
 	args.length = arguments.length-1;
-	if(M.i.class_instances[M.i.selector]){ins = M.i.class_instances[M.i.selector][1];sel = M.i.selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
+	if(M.i.class_instances[selector]){ins = M.i.class_instances[selector][1];sel = selector;}else if(M.i.class_instances[to]){ins = M.i.class_instances[to][1];sel = to;}
 	if(ins){
 		if(ins.length == 1){
 			return ins[0].prototype[method].apply(ins[0],args);
@@ -2023,7 +2081,7 @@ M.prototype.invoke_s = function(method,to){
 			for(var i=0;i<ins.length;i++) ins[i].prototype[method].apply(ins[i],args);
 		}
 	}else{
-		if(element.length){
+		if(element instanceof Array){
 			return M.i.iter(function(item,index){
 				var res = M.i._is_class(item);
 				if(res) M.i.class_instances[res[0]][res[1]].prototype[method].apply(ins[i],args);
