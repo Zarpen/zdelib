@@ -110,6 +110,15 @@ Qsearch.prototype._delete = function(){
 	var me = this;
 	if(_("#qsearch_container_"+me.focus.id+"D")) _("#qsearch_container_"+me.focus.id+"C").del();
 	_().del_event("keydown",{"func":me.search,"capture":true,"with":me},me.focus);
+	_().del_event("mousedown",{"func":function(e){
+		var f = e.target ? e.target : e.srcElement;
+		if((f.id && f.id.search(me.focus.id) >= 0) || (f.parentNode && f.parentNode.id && f.parentNode.id.search(me.focus.id) >= 0)){
+		}else{if(_("#qsearch_container_"+me.focus.id+"D"))_("#qsearch_container_"+me.focus.id+"C").del();}
+	},"capture":true,"with":me},_().getBase());
+	_().del_event("keypress",{"func":function(e){
+		var unicode=e.charCode? e.charCode : e.keyCode;
+		if(unicode != 27){}else{if(_("#qsearch_container_"+me.focus.id+"D"))_("#qsearch_container_"+me.focus.id+"C").del();}
+	},"capture":true,"with":me},_().getBase());
 }
 /* -------------------- */
 /* CALENDAR CLASS */
@@ -127,7 +136,7 @@ function Calendar(args){
 		var f = e.target ? e.target : e.srcElement;
 		if((f.id && f.id.search(me.focus.id) >= 0) || (f.parentNode && f.parentNode.id && f.parentNode.id.search(me.focus.id) >= 0) || 
 			(f.className && f.className.search("calendar") >= 0) || (f.parentNode && f.parentNode.className && f.parentNode.className.search("calendar") >= 0)){
-		}else{if(_("#calendar_container_"+me.id+"D")) me.hide();}
+		}else{if(_("#calendar_container_"+me.id+"D"))me.hide();}
 	},"capture":true,"with":me},_().getBase());
 	_().add_event("keypress",{"func":function(e){
 		var unicode=e.charCode? e.charCode : e.keyCode;
@@ -212,5 +221,42 @@ Calendar.prototype.hideAll = function(){
 Calendar.prototype._delete = function(){
 	var me = this;
 	if(_("#calendar_container_"+me.id+"D")) _("#calendar_container_"+me.id+"C").del();
-	_(me.focus).del_event("focus",{func:function(){me.show();},capture:true});
+	_(me.focus).del_event("focus",{func:function(){me.hideAll();me.show();},capture:true});
+	
+	_(me.focus).del_event("mousedown",{"func":function(e){
+		var f = e.target ? e.target : e.srcElement;
+		if((f.id && f.id.search(me.focus.id) >= 0) || (f.parentNode && f.parentNode.id && f.parentNode.id.search(me.focus.id) >= 0) || 
+			(f.className && f.className.search("calendar") >= 0) || (f.parentNode && f.parentNode.className && f.parentNode.className.search("calendar") >= 0)){
+		}else{if(_("#calendar_container_"+me.id+"D")) me.hide();}
+	},"capture":true,"with":me},_().getBase());
+	_().del_event("keypress",{"func":function(e){
+		var unicode=e.charCode? e.charCode : e.keyCode;
+		if(unicode != 27){}else{if(_("#calendar_container_"+me.id+"D")){me.hide();me.focus.blur();}}
+	},"capture":true,"with":me},_().getBase());
+}
+function Dialog(args){
+	var me = this;
+	me.focus = args.focus;
+	me.selector = args.selector;
+	me.bind_count = 0;
+	me.id = me.focus.id ? me.focus.id : _().guid();
+	
+	mb._(me.focus).wrap({id:me.id});
+	
+	_(_().getBase().body).addm("<div id='"+me.id+"_win_conteiner' ><div id='"+me.id+"_win_resize' style='padding:2px;' ><div id='"+me.id+"_win_content' ></div></div></div>");
+	
+}
+Dialog.prototype.bind = function(event_name,func){
+	var me = this;
+	me.events[event_name].push([me.bind_count,func]);
+	me.bind_count++;
+	return me.bind_count;
+}
+Dialog.prototype.unbind = function(event_name,bind_code){
+	var me = this;
+	for(var i=0;i<me.events[event_name].length;i++) if(me.events[event_name][i][0] == bind_code) me.events[event_name].slice(i,i);
+}
+Dialog.prototype.run_bind = function(event_name,options){
+	var me = this;
+	for(var i=0;i<me.events[event_name].length;i++) me.events[event_name][i][1].apply(me,[options]);
 }

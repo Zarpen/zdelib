@@ -290,18 +290,17 @@ M.prototype.iter = function(func,elements){
 }
 M.prototype.add_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element instanceof Array) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
-	var func = function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);};
-	if (element.attachEvent) element.attachEvent('on' + event,func);
-	else element.addEventListener(event,func,options["capture"]);
-	M.i.bind_events.push([element,options["func"],func,event]);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.add_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item),"orig_func":options["func"]},item);},element);
+	M.i.bind_events.push([element,options["orig_func"] ? options["orig_func"] : options["func"],function(){options["func"].apply(options["with"] ? options["with"] : element,arguments);},event]);
+	if (element.addEventListener) element.addEventListener(event,M.i.bind_events[M.i.bind_events.length-1][2],options["capture"]);
+	else element.attachEvent('on' + event,M.i.bind_events[M.i.bind_events.length-1][2]);
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.del_event = function(event,options,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
-	if(element instanceof Array) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item)},item);},element);
+	if(element instanceof Array) return M.i.iter(function(item,index){M.i.del_event(event,{"func":function(i){return function(){options["func"].apply(options["with"] ? options["with"] : i,arguments);}}(item),"orig_func":options["func"]},item);},element);
 	var func = false;
-	for(var i=0;i<M.i.bind_events.length;i++) if(M.i.bind_events[i][0] === element && M.i.bind_events[i][1].toString() == options["func"].toString() && M.i.bind_events[i][3] == event) func = i;
+	for(var i=0;i<M.i.bind_events.length;i++) if(M.i.bind_events[i][0] === element && (M.i.bind_events[i][1].toString() == options["func"].toString() || (options["orig_func"] && M.i.bind_events[i][1].toString() == options["orig_func"].toString())) && M.i.bind_events[i][3] == event) func = i;
 	if(element.removeEventListener) element.removeEventListener(event,func ? M.i.bind_events[func][2] : function(){},options["capture"]); else element.detachEvent("on"+event,func ? M.i.bind_events[func][2] : function(){});
 	if(func){M.i.bind_events[func][0] = false;M.i.bind_events.slice(func,func+1);}
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
@@ -881,13 +880,13 @@ M.prototype.center = function(to){
 	element.style.left = pos[1]+"px";
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
-M.prototype.wrap = function(type,to){
+M.prototype.wrap = function(opts,to){
 	try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
 	if(element instanceof Array) return M.i.iter(function(item,index){M.i.wrap(item);},element);
 	
 	var parent = element.parentNode ? element.parentNode : M.i.base_doc.body;
 	var node = parent.removeChild(element);
-	var wrape = M.i.create((!M.i.empty(type) ? type : "div"),(node.id ? node.id+"_wrap" : ""));
+	var wrape = M.i.create((opts["type"] ? opts["type"] : "div"),(node.id ? node.id+"_wrap" : opts["id"]+"_wrap"));
 	M.i.set_attr("class=zdelib-wrapper;",wrape);
 	parent.appendChild(wrape);
 	wrape.appendChild(node);
@@ -1390,8 +1389,20 @@ M.prototype.undrag = function(to){
 	
 	var obj = M.i.get_obj(element);
 	element.style = obj.style;
-	M.i.del_event("mousedown",{"func":function(){obj.drag = true;},"capture":true},element);
-	M.i.del_event("mouseup",{"func":function(){obj.drag = false;obj.me.style.zIndex=1;},"capture":true},element);
+	M.i.del_event("mousedown",{"func":function(e){
+		M.i.cancel_event(e);
+		obj.drag = true;
+		var ev_pos = M.i.event_pos(e);
+		var obj_pos = M.i.get_pos(obj.me,true);
+		obj.data.ipush = [ev_pos[0]-obj_pos[0],ev_pos[1]-obj_pos[1],obj_pos[2],obj_pos[3]];
+		obj.me.parentNode.style.zIndex = 100;
+	},"capture":true},element.parentNode);
+	M.i.del_event("mouseup",{"func":function(e){
+		M.i.cancel_event(e);
+		obj.drag = false;
+		obj.data.ipush=false;
+		obj.me.parentNode.style.zIndex = "auto";
+	},"capture":true},element.parentNode);
 	M.i.obj_unreg(element,false);
 	M.i.unwrap(element);
 	
