@@ -5,7 +5,7 @@ function Infotip(args){
 	me.focus = args.focus;
 	me.selector = args.selector;
 	me.title = me.focus.title;
-	
+
 	_().add_event("mousemove",{"func":me.show,"capture":true,"with":me},me.focus);
 	_().add_event("mouseout",{"func":me.hide,"capture":true,"with":me},me.focus);
 	_().set_attr("title=;",me.focus);
@@ -238,13 +238,76 @@ function Dialog(args){
 	var me = this;
 	me.focus = args.focus;
 	me.selector = args.selector;
+	me.content = args.content;
+	me.url = args.url;
+	me.width = args.width ? args.width+(!isNaN(args.width) ? "px": "") : "auto";
+	me.height = args.height ? args.height+(!isNaN(args.width) ? "px": "") : "auto";
 	me.bind_count = 0;
 	me.id = me.focus.id ? me.focus.id : _().guid();
+	me.focus_parent = me.focus.parentNode ? me.focus.parentNode : false;
+	me.events = {open:[],close:[],destroy:[],active:[],inactive:[],scroll:[]};
+	me.scroll_left = 0;
+	me.scroll_top = 0;
 	
-	mb._(me.focus).wrap({id:me.id});
+	var n_instances = _()._i_class_name("Dialog").length;
+	me.id = me.id+"_"+(n_instances ? n_instances : 0);
 	
-	_(_().getBase().body).addm("<div id='"+me.id+"_win_conteiner' ><div id='"+me.id+"_win_resize' style='padding:2px;' ><div id='"+me.id+"_win_content' ></div></div></div>");
+	me.active = n_instances <= 0 ? true : false;
+
+	_(_().getBase().body).addm("<div id='"+me.id+"_win_container' style='position:absolute;width:"+me.width+";height:"+me.height+";display:none;' class='dialog-box' >"+
+		"<div id='"+me.id+"_win_header' style='height:20px;' class='dialog-header' ></div><div id='"+me.id+"_win_content' class='dialog-content' ></div></div>");
 	
+	
+	if(me.content){
+		_("#"+me.id+"_win_contentC").append(me.content);
+	}else if(me.url){
+		// iframe type dialog
+	}else{
+		var content = me.focus_parent ? me.focus_parent.removeChild(me.focus) : me.focus;
+		_("#"+me.id+"_win_contentC").append(content);
+	}
+
+	// setup options
+	if(args.autoOpen) me.show();
+	if(args.center) _("#"+me.id+"_win_containerC").center();
+	
+	// basic functions
+	
+	// resize
+	_("#"+me.id+"_win_containerC").resize();
+
+	// drag
+	var wsize = _().win_size();
+	var wscroll = _().win_scroll();
+	_("#"+me.id+"_win_containerC").drag({drag_area:me.id+"_win_header",limits:{x:[0,wsize[0]+wscroll[0]],y:[0,wsize[1]+wscroll[1]]}});
+	
+	// add basic events
+	_("#"+me.id+"_win_containerC").add_event("mousedown",{func:function(){
+		var instances = _()._i_class_name("Dialog");
+		for(var i=0;i<instances.length;i++){
+			instances[i].active = false;
+			_("#"+instances[i].id+"_win_containerC").set_sty("zIndex:auto;");
+			instances[i].run_bind("inactive");
+		}
+		
+		me.active = true;
+		_("#"+me.id+"_win_containerC").set_sty("zIndex:1000;");
+		me.run_bind("active");
+	},capture:true});
+	
+	_("#"+me.id+"_win_headerC").add_event("mouseup",{func:function(){
+		_("#"+me.id+"_win_containerC").set_sty(me.active ? "zIndex:1000;" : "zIndex:auto;");
+	},capture:true});
+}
+Dialog.prototype.show = function(){
+	var me = this;
+	_("#"+me.id+"_win_containerC").set_sty("display:;");
+	me.run_bind("open");
+}
+Dialog.prototype.hide = function(){
+	var me = this;
+	_("#"+me.id+"_win_containerC").set_sty("display:none;");
+	me.run_bind("close");
 }
 Dialog.prototype.bind = function(event_name,func){
 	var me = this;
@@ -260,3 +323,98 @@ Dialog.prototype.run_bind = function(event_name,options){
 	var me = this;
 	for(var i=0;i<me.events[event_name].length;i++) me.events[event_name][i][1].apply(me,[options]);
 }
+Dialog.prototype.scroll = function(){
+	var instances = _()._i_class_name("Dialog");
+	var obj,old_left,old_top,left = 0,top = 0,total_scroll_left = 0,total_scroll_top = 0,rs,bs;
+	var center_left,center_top;
+
+	for(var i=0;i<instances.length;i++){
+		if(instances[i].active){
+			_().zt.end("scroll");
+			
+			obj = _("#"+instances[i].id+"_win_container_wrapD");
+
+			rs = _("|bodyC").get_pos();
+			bs = _(obj).get_pos();
+			
+			old_left = parseInt(_(obj).get_sty("left").slice(0,_(obj).get_sty("left").indexOf('p')));
+			old_top = parseInt(_(obj).get_sty("top").slice(0,_(obj).get_sty("top").indexOf('p')));
+
+			total_scroll_left = (_().getBase().documentElement.scrollLeft + _().getBase().body.scrollLeft);
+			left = instances[i].scroll_left == total_scroll_left ? old_left+total_scroll_left : (old_left-instances[i].scroll_left)+total_scroll_left;
+			total_scroll_top = (_().getBase().documentElement.scrollTop + _().getBase().body.scrollTop);
+			top = instances[i].scroll_top == total_scroll_top ? old_top+total_scroll_top : (old_top-instances[i].scroll_top)+total_scroll_top;
+			
+			center_left = bs[2] <= _().getBase().documentElement.clientWidth ? 
+				Math.round((_().getBase().documentElement.clientWidth-bs[2])/2)+total_scroll_left : 0;
+			center_top = bs[3] <= _().getBase().documentElement.clientHeight ?
+				Math.round((_().getBase().documentElement.clientHeight-bs[3])/2)+total_scroll_top : 0;
+				
+			if(left > center_left) left -= left-center_left;
+			if(left < center_left) left += center_left-left;
+			if(top > center_top) top -= top-center_top;
+			if(top < center_top) top += center_top-top;
+
+			_().zt.tick("scroll",function(){
+				var left_amount,top_amount;
+				if(_().empty(_().zt.tick_var("scroll","left"))) _().zt.tick_var("scroll","left",old_left);
+				if(_().empty(_().zt.tick_var("scroll","top"))) _().zt.tick_var("scroll","top",old_top);
+				if(_().zt.tick_var("scroll","left") < left){
+					if(left - _().zt.tick_var("scroll","left") >= 10) left_amount = 5; else left_amount = 1;
+				}else{
+					if(_().zt.tick_var("scroll","left") - left >= 10) left_amount = 5; else left_amount = 1;
+				}
+				if(_().zt.tick_var("scroll","top") < top){
+					if(top - _().zt.tick_var("scroll","top") >= 10) top_amount = 5; else top_amount = 1;
+				}else{
+					if(_().zt.tick_var("scroll","top") - top >= 10) top_amount = 5; else top_amount = 1;
+				}
+				if(_().zt.tick_var("scroll","left") < left) _().zt.tick_var("scroll","left",_().zt.tick_var("scroll","left")+left_amount);
+				if(_().zt.tick_var("scroll","left") > left) _().zt.tick_var("scroll","left",_().zt.tick_var("scroll","left")-left_amount);
+				if(_().zt.tick_var("scroll","top") < top) _().zt.tick_var("scroll","top",_().zt.tick_var("scroll","top")+top_amount);
+				if(_().zt.tick_var("scroll","top") > top) _().zt.tick_var("scroll","top",_().zt.tick_var("scroll","top")-top_amount);
+				_(obj).set_sty("left:"+_().zt.tick_var("scroll","left")+"px;");
+				_(obj).set_sty("top:"+_().zt.tick_var("scroll","top")+"px;");
+				if(_().zt.tick_var("scroll","left") == left && _().zt.tick_var("scroll","top") == top) _().zt.end("scroll");
+			},10);
+			
+			instances[i].scroll_left = _().getBase().documentElement.scrollLeft + _().getBase().body.scrollLeft;
+			instances[i].scroll_top = _().getBase().documentElement.scrollTop + _().getBase().body.scrollTop;
+			
+			instances[i].run_bind("scroll");
+		}
+	}
+	
+	_().getWin().clearTimeout(Dialog.prototype.delay);
+	Dialog.prototype.delay = false;
+}
+Dialog.prototype._delete = function(){
+	var me = this;
+	// delete basic events
+	_("#"+me.id+"_win_containerC").del_event("mousedown",{func:function(){
+		var instances = _()._i_class_name("Dialog");
+		for(var i=0;i<instances.length;i++){
+			instances[i].active = false;
+			_("#"+instances[i].id+"_win_containerC").set_sty("zIndex:auto;");
+		}
+		
+		me.active = true;
+		_("#"+me.id+"_win_containerC").set_sty("zIndex:1000;");
+	},capture:true});
+	
+	_("#"+me.id+"_win_headerC").del_event("mouseup",{func:function(){
+		_("#"+me.id+"_win_containerC").set_sty(me.active ? "zIndex:1000;" : "zIndex:auto;");
+	},capture:true});
+	
+	_("#"+me.id+"_win_containerC").unresize();
+	_("#"+me.id+"_win_containerC").undrag();
+	
+	//if(!me.content && !me.url) if(me.focus_parent) me.focus_parent.appendChild(me.focus);
+	
+	if("#"+me.id+"_win_containerD") _("#"+me.id+"_win_containerC").del();
+	me.run_bind("destroy");
+}
+Dialog.prototype.delay = false;
+
+_(_().getWin()).add_event("scroll",{func:function(){Dialog.prototype.delay = Dialog.prototype.delay === false ? 
+_().getWin().setTimeout(Dialog.prototype.scroll,1) : Dialog.prototype.delay;},capture:true});

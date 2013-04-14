@@ -5,6 +5,8 @@ Index.prototype.show_example = function(example_id){
 	if(_("#stock-inputD")) _("#stock-inputC")._unclass();
 	if(_("#date-input-startD")) _("#date-input-startC")._unclass();
 	if(_("#date-input-endD")) _("#date-input-endC")._unclass();
+	if(_(".dialog-boxD")) _()._unclass_type("Dialog");
+	
 	_().clear_poll();
 	
 	_("#panel-centerC").set_sty("visibility:visible;");
@@ -17,7 +19,7 @@ Index.prototype.show_example = function(example_id){
 		break;
 		case "stock-example":
 			_("#panel-centerC").addm("<form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)&nbsp;&nbsp;</td></tr></table></form>");
-			_("#stock-inputC")._class("Qsearch",null,{
+			_("#stock-inputC")._class("Qsearch",{
 				ajax:{
 					url:"http://d.yimg.com/aq/autoc?query=$&region=ES&lang=es-ES",
 					pcallback:"YAHOO.util.ScriptNodeDataSource.callbacks",
@@ -62,7 +64,7 @@ Index.prototype.show_example = function(example_id){
 						//}
 					},
 					poll:"stock_detail_poll",
-					poll_delay:1000
+					poll_delay:60000
 				});
 			});
 		break;	
@@ -71,6 +73,18 @@ Index.prototype.show_example = function(example_id){
 			"<td>&nbsp;&nbsp;&nbsp;&nbsp;Select End Date:</td><td><input id='date-input-end' type='text' size='10' /></td></tr></table></form>")
 			.nav("#date-input-startC")._class("Calendar").nav("#date-input-endC")._class("Calendar");
 		break;
+		case "dialog-example":
+			_("#panel-centerC").addm("<div><p>Clik <a id='open_window' href='#' >here</a> for window open</p></div>").nav("#open_windowC").add_event("click",{func:function(e){
+				_().cancel_event(e);
+				var id = _().guid();
+				_("|bodyC").addm("<div id='"+id+"' ><p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt"+ 
+					"ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco"+ 
+					"laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in"+
+					"voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat"+
+					"non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p></div>").nav("#"+id+"C")._class("Dialog",{
+						width:500,height:500,autoOpen:true,center:true
+					});
+			},capture:true});
 		break;
 	}
 }
@@ -81,6 +95,7 @@ _().load(function(){
 	_().add_class("Infotip",Infotip);
 	_().add_class("Qsearch",Qsearch);
 	_().add_class("Calendar",Calendar);
+	_().add_class("Dialog",Dialog);
 	
 	_("|bodyC")._class("Index");
 	
@@ -88,7 +103,8 @@ _().load(function(){
 		+"<div id='panel-left' class='panel-left' style='float:left' ><ul id='examples-list' class='menu-list' >"
 		+"<li><a id='tip-example' href='#'>Simple tip example</a></li>"
 		+"<li><a id='stock-example' href='#'>Stock search example</a></li>"
-		+"<li><a id='calendar-example' href='#'>Calendar example</a></li></ul></div>"
+		+"<li><a id='calendar-example' href='#'>Calendar example</a></li>"
+		+"<li><a id='dialog-example' href='#'>Dialog example</a></li></ul></div>"
 		+"<div id='panel-center' class='panel-center' style='float:left' ></div><div id='panel-right' style='float:left' class='panel-right' ></div><div style='float:none;clear:both' ></div><div id='footer' class='footer' ></div></div>");
 		
 	_("#examples-list > |li > |aC").add_event("click",{"func":function(){_("|bodyC").invoke("show_example",this.id);},"capture":true});
