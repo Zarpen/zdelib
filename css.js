@@ -49,5 +49,7 @@ _().load(function(){
 			[".dialog-rdc:hover","cursor:n-resize;"],
 			[".dialog-rdc",""],
 			[".dialog-rdc:hover","cursor:se-resize;"],
+			[".gallery-scope",""],
+			[".gallery-thumbnail","-moz-border-radius: 1em;-webkit-border-radius: 1em;border-radius: 1 em;"],
 	],"decoration");
 });

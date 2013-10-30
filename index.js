@@ -6,6 +6,7 @@ Index.prototype.show_example = function(example_id){
 	if(_("#date-input-startD")) _("#date-input-startC")._unclass();
 	if(_("#date-input-endD")) _("#date-input-endC")._unclass();
 	if(_(".dialog-boxD")) _()._unclass_type("Dialog");
+	if(_("#gallery-areaD")) _("#gallery-areaD")._unclass();
 	
 	_().clear_poll();
 	
@@ -86,6 +87,9 @@ Index.prototype.show_example = function(example_id){
 					});
 			},capture:true});
 		break;
+		case "gallery-example":
+			_("#panel-centerC").add("div","gallery-area").nav("#gallery-areaC")._class("Gallery");
+		break;
 	}
 }
 /* -------------- */
@@ -96,6 +100,7 @@ _().load(function(){
 	_().add_class("Qsearch",Qsearch);
 	_().add_class("Calendar",Calendar);
 	_().add_class("Dialog",Dialog);
+	_().add_class("Gallery",Gallery);
 	
 	_("|bodyC")._class("Index");
 	
@@ -104,7 +109,8 @@ _().load(function(){
 		+"<li><a id='tip-example' href='#'>Simple tip example</a></li>"
 		+"<li><a id='stock-example' href='#'>Stock search example</a></li>"
 		+"<li><a id='calendar-example' href='#'>Calendar example</a></li>"
-		+"<li><a id='dialog-example' href='#'>Dialog example</a></li></ul></div>"
+		+"<li><a id='dialog-example' href='#'>Dialog example</a></li>"
+		+"<li><a id='gallery-example' href='#'>Gallery example</a></li></ul></div>"
 		+"<div id='panel-center' class='panel-center' style='float:left' ></div><div id='panel-right' style='float:left' class='panel-right' ></div><div style='float:none;clear:both' ></div><div id='footer' class='footer' ></div></div>");
 		
 	_("#examples-list > |li > |aC").add_event("click",{"func":function(){_("|bodyC").invoke("show_example",this.id);},"capture":true});
