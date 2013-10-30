@@ -798,10 +798,10 @@ M.prototype.addm = function(data,to){
 		}
 		
 		var temp = "";
-		for(var j=0;j<content.length;j++){if(temp == tags[i]){temp = j;break;}else{temp = temp+content.charAt(j);}}
+		for(var j=0;j<=content.length;j++){if(temp == tags[i]){temp = j;break;}else{temp = temp+content.charAt(j);}}
 		content = content.substr(temp);
 		temp = "";
-		for(var j=0;j<content.length;j++){if(temp.search(tags[i+1]) >= 0){temp = temp.replace(tags[i+1],"");content = content.substr(temp.length);break;}else{temp = temp+content.charAt(j);}}
+		for(var j=0;j<=content.length;j++){if(temp.search(tags[i+1]) >= 0){temp = temp.replace(tags[i+1],"");content = content.substr(temp.length);break;}else{temp = temp+content.charAt(j);}}
 		temp = temp.replace(/&nbsp;/gi,"\u00A0");
 		if(temp.match(regexp)) temp = false; 
 		
