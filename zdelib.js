@@ -1502,7 +1502,7 @@ M.prototype.zg2 = {
 	},
     cv:function(value,type){
 	if(M.i.zg2_enableCv){
-		var work_to_device = parseInt(M.i.zm.fix_rat(value,M.i.zg2_base_resolution[type],M.i.zg2_device_resolution[type]));
+		var work_to_device = M.i.zm.fix_rat(value,M.i.zg2_base_resolution[type],M.i.zg2_device_resolution[type]);
 		if(M.i.zg2_pixel_ratio !== M.i.zg2_store_ratio) work_to_device = work_to_device * M.i.zg2_computed_ratio;
 		return work_to_device;
 	}else{
@@ -1511,7 +1511,7 @@ M.prototype.zg2 = {
     },
     rcv:function(value,type){
 	if(M.i.zg2_enableCv){
-		var device_to_work = parseInt(M.i.zm.fix_rat(value,M.i.zg2_device_resolution[type],M.i.zg2_base_resolution[type]));
+		var device_to_work = M.i.zm.fix_rat(value,M.i.zg2_device_resolution[type],M.i.zg2_base_resolution[type]);
 		if(M.i.zg2_pixel_ratio !== M.i.zg2_store_ratio) device_to_work = device_to_work * M.i.zg2_computed_ratio;
 		return device_to_work;
 	}else{
@@ -1760,7 +1760,7 @@ M.prototype.zg2 = {
       try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
       if(element instanceof Array) return M.i.iter(function(item,index){M.i.zg2.rotate(ang,item);},element);
       var c = element.getContext("2d");
-      c.rotate(ang);
+      c.rotate(M.i.zm.deg_rad(ang));
       return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
     },
     save:function(to){
@@ -1775,6 +1775,14 @@ M.prototype.zg2 = {
       if(element instanceof Array) return M.i.iter(function(item,index){M.i.zg2.restore(item);},element);
       var c = element.getContext("2d");
       c.restore();
+      return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+    },
+    scale:function(x,y,to){
+      try{var element = to != undefined && to != null ? M.i.getElement(to) : M.i.getMe();
+      if(element instanceof Array) return M.i.iter(function(item,index){M.i.zg2.scale(x,y,item);},element);
+      var nx = M.i.zg2.cv(x,0),ny = M.i.zg2.cv(y,1);
+      var c = element.getContext("2d");
+      c.scale(nx,ny);
       return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
     },
     arcTo:function(x,y,x1,y1,r,to){
