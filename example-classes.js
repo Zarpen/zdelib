@@ -486,3 +486,7 @@ function Gallery(args){
 		if(me.counter > me.total) me.counter = 1;
 	},3000);
 }
+Gallery.prototype._delete = function(){
+	_().zt.end("image_load");
+	_().zt.end("image_change");
+}

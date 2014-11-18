@@ -6,7 +6,7 @@ Index.prototype.show_example = function(example_id){
 	if(_("#date-input-startD")) _("#date-input-startC")._unclass();
 	if(_("#date-input-endD")) _("#date-input-endC")._unclass();
 	if(_(".dialog-boxD")) _()._unclass_type("Dialog");
-	if(_("#gallery-areaD")) _("#gallery-areaD")._unclass();
+	if(_("#gallery-areaD")) _("#gallery-areaC")._unclass();
 	
 	_().clear_poll();
 	
