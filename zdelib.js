@@ -49,7 +49,7 @@ function M(id,sub_id){
 			if(id_char == "|") res = temp_base.getElementsByTagName(name);
 			if(name.indexOf(">") >= 0) res = M.i.z_selector(id.slice(0,id.length-1));
 			// make new array with elements, dont play with nodelist reference
-			if(res && res.length && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
+			if(res && (res.length || res.length == 0) && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
 			if(res instanceof Array && (res.length == 1 || res.length == 0)) res = res[0]; 
 			M.i.me = false;
 			M.i.me = res;
@@ -420,7 +420,7 @@ M.prototype.getElement = function(id){
 		if(id_char == ".") res = M.i.getElementsByClassName(name);
 		if(id_char == "|") res = M.i.base_doc.getElementsByTagName(name);
 		if(name.indexOf(">") >= 0) res = M.i.z_selector(id.slice(0,id.length-1));
-		if(res && res.length && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
+		if(res && (res.length || res.length == 0) && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
 		if(res instanceof Array && (res.length == 1 || res.length == 0)) res = res[0]; 
 	}
 	return res;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
@@ -1302,23 +1302,22 @@ M.prototype.zt = {
 			return res;
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 	},
-	end:function(name){
+	end:function(name,type){
 		try{
 			var remove = [];
+			var final_ticks = [];
 			for(var i=0;i<M.i.zt.timers.length;i++){
-				if(M.i.str_cmp(name,M.i.zt.timers[i][0])){
+				if((name && M.i.str_cmp(name,M.i.zt.timers[i][0])) || (type && (type == M.i.zt.timers[i][2] || type == "A"))){
 					if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]); else M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);
 					remove.push(i);
 				} 	
 			}
-			if(remove.length > 0) for(var i=remove.length;i>=0;i--) M.i.zt.timers.splice(remove[i],1);
+			for(var i=0;i<M.i.zt.timers.length;i++) if(remove.indexOf(i) < 0) final_ticks.push(M.i.zt.timers[i]);
+			M.i.zt.timers = final_ticks;
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
-	end_intervals:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
-		if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
-	end_timeouts:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
-		if(M.i.zt.timers[i][2] == "T") M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
-	end_all:function(){try{for(var i=0;i<M.i.zt.timers.length;i++)
-		if(M.i.zt.timers[i][2] == "I") M.i.base_win.clearInterval(M.i.zt.timers[i][1]); else M.i.base_win.clearTimeout(M.i.zt.timers[i][1]);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
+	end_intervals:function(){try{ M.i.zt.end(false,"I"); }catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
+	end_timeouts:function(){try{ M.i.zt.end(false,"T"); }catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
+	end_all:function(){ try{ M.i.zt.end(false,"A"); }catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}},
 	leap_year:function(y){return ((y % 4 == 0 && y % 100 != 0) || y % 400 == 0);},
 	month_days:function(m,y){return m == 2 ? 28+M.i.zt.leap_year(y) : 31-((m-4)*(m-6)*(m-9)*(m-11) == 0);},
 	date_comp:function(date1,date2){
