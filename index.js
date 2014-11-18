@@ -1,7 +1,7 @@
 /* MAIN PAGE CLASS */
 function Index(){}
 Index.prototype.show_example = function(example_id){
-	if(_("|td>|inputD")) _("|td > |inputC")._unclass();
+	if(_("|td>|inputD")) _("|td> |inputC")._unclass();
 	if(_("#stock-inputD")) _("#stock-inputC")._unclass();
 	if(_("#date-input-startD")) _("#date-input-startC")._unclass();
 	if(_("#date-input-endD")) _("#date-input-endC")._unclass();
