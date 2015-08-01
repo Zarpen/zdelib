@@ -48,9 +48,8 @@ function M(id,sub_id){
 			if(id_char == ".") res = M.i.getElementsByClassName(name);
 			if(id_char == "|") res = temp_base.getElementsByTagName(name);
 			if(name.indexOf(">") >= 0) res = M.i.z_selector(id.slice(0,id.length-1));
-			// make new array with elements, dont play with nodelist reference
-			if(res && (res.length || res.length == 0) && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
-			if(res instanceof Array && (res.length == 1 || res.length == 0)) res = res[0]; 
+			if(res && !(res instanceof Array) && res.length !== undefined){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
+			if(res && res instanceof Array && (res.length === 1 || res.length === 0)) res = res[0]; 
 			M.i.me = false;
 			M.i.me = res;
 			if(mode == "class" && M.i.me){
@@ -85,11 +84,16 @@ M.prototype.init = function(){
 	M.i.add_event("mousemove",{"func":function(e){
 		M.i.cancel_event(e);
 		try{M.i.getBase().selection.empty();}catch(e){M.i.getWin().getSelection().removeAllRanges();}
+		var rox = 3;
+		var roy = 3;
+		var roff = 2;
 		
 		for(var i=0;i<M.i.reg_objs.length;i++){
 			var reg_obj = M.i.reg_objs[i];
+
+			var pos = M.i.event_pos(e);
+
 			if(reg_obj.drag){
-				var pos = M.i.event_pos(e);
 				var final_x_0,final_y_0,final_x_1,final_y_1,change_x,change_y,offset;
 				final_x_0 = pos[0]-reg_obj.data.ipush[0];
 				final_y_0 = pos[1]-reg_obj.data.ipush[1];
@@ -97,24 +101,29 @@ M.prototype.init = function(){
 				final_y_1 = pos[1]+reg_obj.data.ipush[3];
 				
 				offset = reg_obj.data.drag_area !== reg_obj.me.parentNode ? 
-					reg_obj.data.drag_area.offsetTop+(reg_obj.data.drag_area.offsetHeight/2) : 5;
+					reg_obj.data.drag_area.offsetTop+(reg_obj.data.drag_area.offsetHeight/2) : 0;
 				if(reg_obj.data.limits){
 					var l = reg_obj.data.limits;
 					if((final_x_0 >= l.x[0] && final_x_1 <= l.x[1])) change_x = true;
 					if((final_y_0 >= l.y[0] && final_y_1 <= l.y[1])) change_y = true;
 					M.i.throttle(function(){
-						if(change_x) M.i.set_sty("left:"+final_x_0+"px;",reg_obj.me.parentNode);
-						if(change_y) M.i.set_sty("top:"+(pos[1]-offset)+"px;",reg_obj.me.parentNode);
+						if(change_x) M.i.set_sty("left:"+final_x_0+"px;",reg_obj.me.parentNode); else 
+							M.i.set_sty("left:"+(final_x_0 < l.x[0] ? 0 : (final_x_1 > l.x[1] ? l.x[1]-reg_obj.data.ipush[2] : final_x_1))+"px;",reg_obj.me.parentNode);
+						if(change_y) M.i.set_sty("top:"+final_y_0+"px;",reg_obj.me.parentNode); else
+							M.i.set_sty("top:"+(final_y_0 < l.y[0] ? 0 : (final_y_1 > l.y[1] ? l.y[1]-reg_obj.data.ipush[3] : final_y_1))+"px;",reg_obj.me.parentNode);
 					},10,M.i.init)();
 				}else{
 					M.i.throttle(function(){
-						M.i.set_sty("left:"+final_x_0+"px;top:"+(pos[1]-offset)+"px;",reg_obj.me.parentNode);
+						M.i.set_sty("left:"+final_x_0+"px;top:"+final_y_0+"px;",reg_obj.me.parentNode);
 						reg_obj.data.last_pos = pos;
 					},10,M.i.init)();
 				}
 			}
-			if(reg_obj.resize){
-				var pos = M.i.event_pos(e);
+
+			var winLimit = M.i.win_size();
+			var resizeLimit = (pos[0] <= 0 || pos[0] >= winLimit[0]) || (pos[1] <= 0 || pos[1] >= winLimit[1]);
+
+			if(!resizeLimit && reg_obj.resize){
 				var node = reg_obj.me;
 				var final_w,final_h,type_x,type_y;
 				var change_x,change_y,change_w,change_h;
@@ -146,11 +155,17 @@ M.prototype.init = function(){
 						change_w = change_h = true;type_x = type_y = 2;
 						break;
 				}
-				
+
 				if(type_x == 1) final_w = reg_obj.data.ipush[2] + ((reg_obj.data.ipush[0]+reg_obj.data.ipush[2]) - (pos[0]+reg_obj.data.ipush[2])); else 
 					final_w = pos[0]-reg_obj.data.ipush[0];
 				if(type_y == 1) final_h = reg_obj.data.ipush[3] + ((reg_obj.data.ipush[1]+reg_obj.data.ipush[3]) - (pos[1]+reg_obj.data.ipush[3])); else
 					final_h = pos[1]-reg_obj.data.ipush[1];
+
+				if((final_w <= 100 && change_w) || (final_h <= 40 && change_h)){
+					if(change_w) reg_obj.data.ipush[2] = 100;
+					if(change_h) reg_obj.data.ipush[3] = 40;
+					return;
+				}
 
 				var wrap_obj = M.i.get_obj(node.parentNode);
 				if(wrap_obj && wrap_obj.data.limits){
@@ -163,24 +178,29 @@ M.prototype.init = function(){
 				if(change_y) M.i.set_sty("top:"+pos[1]+"px;",max ? max : node);
 					
 				while(node){
-					if(change_w) M.i.set_sty("width:"+final_w+"px;",node);
-					if(change_h) M.i.set_sty("height:"+final_h+"px;",node);
+					if(change_w) M.i.set_sty("width:"+(final_w+rox+roff)+"px;",node);
+					if(change_h) M.i.set_sty("height:"+(final_h+roy)+"px;",node);
 					node = node.parentNode && node.parentNode.id && node.parentNode.id.search(/_wrap/) > -1 ? node.parentNode : false;
 				}
-				
+
 				if(change_x) reg_obj.data.ipush[0] = pos[0];
 				if(change_y) reg_obj.data.ipush[1] = pos[1];
 				if(change_w) reg_obj.data.ipush[2] = final_w;
 				if(change_h) reg_obj.data.ipush[3] = final_h;
-				if(change_w) M.i.set_sty("width:"+(final_w-10)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rucD");
-				if(change_h) M.i.set_sty("height:"+(final_h-6)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rlD");
-				if(change_w) M.i.set_sty("width:"+(final_w-10)+"px;float:left;",reg_obj.me.id);
-				if(change_h) M.i.set_sty("height:"+(final_h-6)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rrD");
-				if(change_h) M.i.set_sty("width:"+(final_w-10)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rdcD");
+				if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rucD");
+				if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rlD");
+				if(change_w) M.i.set_sty("width:"+(final_w-(rox))+"px;float:left;",reg_obj.me.id);
+				if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rrD");
+				if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rdcD");
 			}
 		}
 	},"capture":false},M.i.base_win);
 	
+	if(M.i.is_touch()) M.i.add_event("touchmove",{"func":function(e){
+		var ev_elem = e.target ? e.target : e.srcElement;
+		ev_elem.mousemove(e);
+	},"capture":false},M.i.base_win);
+
 	M.i.add_event("mouseup",{"func":function(e){
 		M.i.cancel_event(e);
 		for(var i=0;i<M.i.reg_objs.length;i++){
@@ -191,6 +211,11 @@ M.prototype.init = function(){
 			}
 			if(M.i.reg_objs[i].resize) M.i.reg_objs[i].resize = false;
 		}
+	},"capture":false},M.i.base_win);
+
+	if(M.i.is_touch()) M.i.add_event("touchend",{"func":function(e){
+		var ev_elem = e.target ? e.target : e.srcElement;
+		ev_elem.mouseup(e);
 	},"capture":false},M.i.base_win);
 	
 	// create basic lib css
@@ -420,8 +445,8 @@ M.prototype.getElement = function(id){
 		if(id_char == ".") res = M.i.getElementsByClassName(name);
 		if(id_char == "|") res = M.i.base_doc.getElementsByTagName(name);
 		if(name.indexOf(">") >= 0) res = M.i.z_selector(id.slice(0,id.length-1));
-		if(res && (res.length || res.length == 0) && id_char != "#"){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
-		if(res instanceof Array && (res.length == 1 || res.length == 0)) res = res[0]; 
+		if(res && !(res instanceof Array) && res.length !== undefined){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
+		if(res && res instanceof Array && (res.length === 1 || res.length === 0)) res = res[0];
 	}
 	return res;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
@@ -1942,16 +1967,23 @@ M.prototype.event_pos = function(e){
 	var posy = 0;
 	var ev_elem = e.target ? e.target : e.srcElement;
 	if (!e) var e = M.i.base_win.event;
-	if (e.pageX || e.pageY) 	{
-		posx = e.pageX;
-		posy = e.pageY;
+
+	if(e.type && e.type.indexOf("touch") >= 0){
+		var posxy = e.originalEvent.touches[0] || e.originalEvent.changedTouches[0];
+		posx = posxy.pageX;
+		posy = posxy.pageY;
+	}else{
+		if (e.pageX || e.pageY){
+			posx = e.pageX;
+			posy = e.pageY;
+		}else if (e.clientX || e.clientY){
+			posx = e.clientX + M.i.base_doc.body.scrollLeft
+				+ M.i.base_doc.documentElement.scrollLeft;
+			posy = e.clientY + M.i.base_doc.body.scrollTop
+				+ M.i.base_doc.documentElement.scrollTop;
+		}
 	}
-	else if (e.clientX || e.clientY) 	{
-		posx = e.clientX + M.i.base_doc.body.scrollLeft
-			+ M.i.base_doc.documentElement.scrollLeft;
-		posy = e.clientY + M.i.base_doc.body.scrollTop
-			+ M.i.base_doc.documentElement.scrollTop;
-	}
+	
 	if((ev_elem.tagName == "CANVAS" || ev_elem.tagName == "canvas") || (ev_elem.parentNode && 
 	  (ev_elem.parentNode.tagName == "CANVAS" || ev_elem.parentNode.tagName == "canvas"))){
 	  var rect = M.i.get_pos(ev_elem);
@@ -1988,6 +2020,11 @@ M.prototype.drag = function(options,to){
 		obj.data.ipush = [ev_pos[0]-obj_pos[0],ev_pos[1]-obj_pos[1],obj.me.parentNode.offsetWidth,obj.me.parentNode.offsetHeight];
 		obj.me.parentNode.style.zIndex = 1000;
 	},"capture":true},drag_area);
+
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){
+		drag_area.mousedown(e);
+	},"capture":true},drag_area);
+
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.undrag = function(to){
@@ -2003,6 +2040,11 @@ M.prototype.undrag = function(to){
 		obj.data.ipush = [ev_pos[0]-obj_pos[0],ev_pos[1]-obj_pos[1],obj_pos[2],obj_pos[3]];
 		obj.me.parentNode.style.zIndex = 100;
 	},"capture":true},obj.data.drag_area);
+
+	if(M.i.is_touch()) M.i.del_event("touchstart",{"func":function(e){
+		drag_area.mousedown(e);
+	},"capture":true},drag_area);
+
 	obj.data.limits = false;
 	obj.data.drag_area = false;
 	obj.data.ipush = false;
@@ -2052,7 +2094,14 @@ M.prototype.resize = function(to){
 	M.i.wrap("",element);
 	obj.data.resize_obj = M.i.max_wrap(element);
 	obj.data.resize_obj = obj.data.resize_obj ? obj.data.resize_obj : (element.parentNode ? element.parentNode : element);
-	
+
+	var rox = 3;
+	var roy = 3;
+	var roff = 2;
+
+	var twSize = M.i.get_pos(obj.data.resize_obj);
+	M.i.set_sty("width:"+(twSize[2]+(rox*2)+2)+"px;height:"+(twSize[3]+(roy*2))+"px;",obj.data.resize_obj);
+
 	var parent = element.parentNode;
 	var elems = [];
 	var temp_obj;
@@ -2064,41 +2113,61 @@ M.prototype.resize = function(to){
 	}
 
 	temp_obj = parent.removeChild(parent.childNodes[parent.childNodes.length-1]);
+	M.i.set_sty("float:left;",temp_obj);
 
-	M.i.append(M.i.create("div",element.id+"_win_rul",{"attr":"class=zdelib-resize-rul;","sty":"width:3px;height:3px;float:left;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_ruc",{"attr":"class=zdelib-resize-ruc;","sty":"height:3px;float:left;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_rur",{"attr":"class=zdelib-resize-rur;","sty":"width:3px;height:3px;float:right;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rul",{"attr":"class=zdelib-resize-rul;","sty":"width:"+rox+"px;height:"+roy+"px;float:left;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_ruc",{"attr":"class=zdelib-resize-ruc;","sty":"height:"+roy+"px;width:"+(twSize[2]+roff)+"px;float:left;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rur",{"attr":"class=zdelib-resize-rur;","sty":"width:"+rox+"px;height:"+roy+"px;float:left;"}),parent);
 	M.i.append(M.i.create("div",element.id+"_win_rue",{"attr":"class=zdelib-resize-rue;","sty":"float:none;clear:both;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_rl",{"attr":"class=zdelib-resize-rl;","sty":"width:3px;float:left;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rl",{"attr":"class=zdelib-resize-rl;","sty":"width:"+rox+"px;height:"+twSize[3]+"px;float:left;"}),parent);
 	M.i.append(temp_obj,parent);
-	M.i.append(M.i.create("div",element.id+"_win_rr",{"attr":"class=zdelib-resize-rr;","sty":"width:3px;float:right;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rr",{"attr":"class=zdelib-resize-rr;","sty":"width:"+rox+"px;height:"+twSize[3]+"px;float:left;"}),parent);
 	M.i.append(M.i.create("div",element.id+"_win_re",{"attr":"class=zdelib-resize-re;","sty":"float:none;clear:both;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_rdl",{"attr":"class=zdelib-resize-rdl;","sty":"width:3px;height:3px;float:left;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_rdc",{"attr":"class=zdelib-resize-rdc;","sty":"height:3px;float:left;"}),parent);
-	M.i.append(M.i.create("div",element.id+"_win_rdr",{"attr":"class=zdelib-resize-rdr;","sty":"width:3px;height:3px;float:right;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rdl",{"attr":"class=zdelib-resize-rdl;","sty":"width:"+rox+"px;height:"+roy+"px;float:left;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rdc",{"attr":"class=zdelib-resize-rdc;","sty":"height:"+roy+"px;width:"+(twSize[2]+roff)+"px;float:left;"}),parent);
+	M.i.append(M.i.create("div",element.id+"_win_rdr",{"attr":"class=zdelib-resize-rdr;","sty":"width:"+rox+"px;height:"+roy+"px;float:left;"}),parent);
 	M.i.append(M.i.create("div",element.id+"_win_rde",{"attr":"class=zdelib-resize-rde;","sty":"float:none;clear:both;"}),parent);
 	for(var i=0;i<elems.length;i++) parent.appendChild(elems[i]);
 	
-	var csize = _(element).get_pos();
-	M.i.set_sty("width:"+(csize[2]-10)+"px;",element.id+"_win_ruc");
-	M.i.set_sty("height:"+(csize[3]-6)+"px;",element.id+"_win_rl");
-	M.i.set_sty("width:"+(csize[2]-10)+"px;float:left;",element.id);
-	M.i.set_sty("height:"+(csize[3]-6)+"px;",element.id+"_win_rr");
-	M.i.set_sty("width:"+(csize[2]-10)+"px;",element.id+"_win_rdc");
+	/*var csize = _(element).get_pos();
+	M.i.set_sty("width:"+(csize[2]-(rox+7))+"px;",element.id+"_win_ruc");
+	M.i.set_sty("height:"+(csize[3]-(roy+3))+"px;",element.id+"_win_rl");
+	M.i.set_sty("width:"+(csize[2]-(rox+7))+"px;float:left;",element.id);
+	M.i.set_sty("height:"+(csize[3]-(roy+3))+"px;",element.id+"_win_rr");
+	M.i.set_sty("width:"+(csize[2]-(rox+7))+"px;",element.id+"_win_rdc");*/
 
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rul";},"capture":true},element.id+"_win_rul");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "ruc";},"capture":true},element.id+"_win_ruc");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rur";},"capture":true},element.id+"_win_rur");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rue";},"capture":true},element.id+"_win_rue");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rl";},"capture":true},element.id+"_win_rl");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rr";},"capture":true},element.id+"_win_rr");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "re";},"capture":true},element.id+"_win_re");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rdl";},"capture":true},element.id+"_win_rdl");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rdc";},"capture":true},element.id+"_win_rdc");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rdr";},"capture":true},element.id+"_win_rdr");
-	M.i.add_event("mousedown",{"func":function(e){M.i.cancel_event(e);var obj_pos = M.i.get_pos(obj.me,true);obj.data.ipush = [obj_pos[0],obj_pos[1],obj_pos[2],obj_pos[3]];obj.resize = "rde";},"capture":true},element.id+"_win_rde");
+	var getResizeSize = function(e,side){
+		M.i.cancel_event(e);
+		var obj_pos = M.i.get_pos(obj.me,true);
+		// TODO: use the width and height of get_pos but reduce only to viewport with scroll discount
+		obj.data.ipush = [obj_pos[0],obj_pos[1],M.i.get_sty("width",obj.me,true)[0],M.i.get_sty("height",obj.me,true)[0]];
+		obj.resize = side;
+	}
+
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rul");},"capture":true},element.id+"_win_rul");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"ruc");},"capture":true},element.id+"_win_ruc");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rur");},"capture":true},element.id+"_win_rur");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rue");},"capture":true},element.id+"_win_rue");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rl");},"capture":true},element.id+"_win_rl");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rr");},"capture":true},element.id+"_win_rr");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"re");},"capture":true},element.id+"_win_re");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rdl");},"capture":true},element.id+"_win_rdl");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rdc");},"capture":true},element.id+"_win_rdc");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rdr");},"capture":true},element.id+"_win_rdr");
+	M.i.add_event("mousedown",{"func":function(e){getResizeSize(e,"rde");},"capture":true},element.id+"_win_rde");
 	
-	var taeget  
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rul");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_ruc");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rur");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rue");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rl");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rr");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_re");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rdl");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rdc");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rdr");
+	if(M.i.is_touch()) M.i.add_event("touchstart",{"func":function(e){var ev_elem = e.target ? e.target : e.srcElement; ev_elem.mousedown(e);},"capture":true},element.id+"_win_rde");
+
 	M.i.set_sty("overflow:auto;",element);
 	
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
@@ -2238,6 +2307,9 @@ M.prototype.is_ff = function(){
 M.prototype.is_op = function(){
 	try{if (/Opera[\/\s](\d+\.\d+)/.test(navigator.userAgent)) var oprversion=new Number(RegExp.$1);
 	return oprversion ? oprversion : -1;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
+M.prototype.is_touch = function(){
+	try{return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (navigator.msMaxTouchPoints > 0);}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
 M.prototype.empty = function(value){
 	try{if((!value || value == false || value == null || value == undefined || value == "") && value !== 0) return true; else return false;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
