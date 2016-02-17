@@ -82,116 +82,120 @@ M.prototype.init = function(){
 	
 	// attach object events
 	M.i.add_event("mousemove",{"func":function(e){
-		M.i.cancel_event(e);
-		try{M.i.getBase().selection.empty();}catch(e){M.i.getWin().getSelection().removeAllRanges();}
-		var rox = 3;
-		var roy = 3;
-		var roff = 2;
-		
-		for(var i=0;i<M.i.reg_objs.length;i++){
-			var reg_obj = M.i.reg_objs[i];
+		var dragOn = false;
+		for(var i=0;i<M.i.reg_objs.length;i++) if(M.i.reg_objs[i].drag) dragOn = true;
+		if(dragOn){
+			M.i.cancel_event(e);
+			try{M.i.getBase().selection.empty();}catch(e){M.i.getWin().getSelection().removeAllRanges();}
+			var rox = 3;
+			var roy = 3;
+			var roff = 2;
+			
+			for(var i=0;i<M.i.reg_objs.length;i++){
+				var reg_obj = M.i.reg_objs[i];
 
-			var pos = M.i.event_pos(e);
+				var pos = M.i.event_pos(e);
 
-			if(reg_obj.drag){
-				var final_x_0,final_y_0,final_x_1,final_y_1,change_x,change_y,offset;
-				final_x_0 = pos[0]-reg_obj.data.ipush[0];
-				final_y_0 = pos[1]-reg_obj.data.ipush[1];
-				final_x_1 = final_x_0+reg_obj.data.ipush[2];
-				final_y_1 = pos[1]+reg_obj.data.ipush[3];
-				
-				offset = reg_obj.data.drag_area !== reg_obj.me.parentNode ? 
-					reg_obj.data.drag_area.offsetTop+(reg_obj.data.drag_area.offsetHeight/2) : 0;
-				if(reg_obj.data.limits){
-					var l = reg_obj.data.limits;
-					if((final_x_0 >= l.x[0] && final_x_1 <= l.x[1])) change_x = true;
-					if((final_y_0 >= l.y[0] && final_y_1 <= l.y[1])) change_y = true;
-					M.i.throttle(function(){
-						if(change_x) M.i.set_sty("left:"+final_x_0+"px;",reg_obj.me.parentNode); else 
-							M.i.set_sty("left:"+(final_x_0 < l.x[0] ? 0 : (final_x_1 > l.x[1] ? l.x[1]-reg_obj.data.ipush[2] : final_x_1))+"px;",reg_obj.me.parentNode);
-						if(change_y) M.i.set_sty("top:"+final_y_0+"px;",reg_obj.me.parentNode); else
-							M.i.set_sty("top:"+(final_y_0 < l.y[0] ? 0 : (final_y_1 > l.y[1] ? l.y[1]-reg_obj.data.ipush[3] : final_y_1))+"px;",reg_obj.me.parentNode);
-					},10,M.i.init)();
-				}else{
-					M.i.throttle(function(){
-						M.i.set_sty("left:"+final_x_0+"px;top:"+final_y_0+"px;",reg_obj.me.parentNode);
-						reg_obj.data.last_pos = pos;
-					},10,M.i.init)();
-				}
-			}
-
-			var winLimit = M.i.win_size();
-			var resizeLimit = (pos[0] <= 0 || pos[0] >= winLimit[0]) || (pos[1] <= 0 || pos[1] >= winLimit[1]);
-
-			if(!resizeLimit && reg_obj.resize){
-				var node = reg_obj.me;
-				var final_w,final_h,type_x,type_y;
-				var change_x,change_y,change_w,change_h;
-				change_x = change_y = change_w = change_y = false;
-				
-				switch(reg_obj.resize){
-					case "rul":
-						change_x = change_w = change_y = change_h = true;type_x = type_y = 1;
-						break;
-					case "ruc":
-						change_y = change_h = true;type_x = type_y = 1;
-						break;
-					case "rur":
-						change_w = change_h = change_y = true;type_x = 2;type_y = 1;
-						break;
-					case "rl":
-						change_w = change_x = true;type_x = type_y = 1;
-						break;
-					case "rr":
-						change_w = true;type_x = 2;type_y = 1;
-						break;
-					case "rdl":
-						change_w = change_x = change_h = true;type_x = 1;type_y = 2;
-						break;
-					case "rdc":
-						change_h = true;type_x = 1;type_y = 2;
-						break;
-					case "rdr":
-						change_w = change_h = true;type_x = type_y = 2;
-						break;
-				}
-
-				if(type_x == 1) final_w = reg_obj.data.ipush[2] + ((reg_obj.data.ipush[0]+reg_obj.data.ipush[2]) - (pos[0]+reg_obj.data.ipush[2])); else 
-					final_w = pos[0]-reg_obj.data.ipush[0];
-				if(type_y == 1) final_h = reg_obj.data.ipush[3] + ((reg_obj.data.ipush[1]+reg_obj.data.ipush[3]) - (pos[1]+reg_obj.data.ipush[3])); else
-					final_h = pos[1]-reg_obj.data.ipush[1];
-
-				if((final_w <= 100 && change_w) || (final_h <= 40 && change_h)){
-					if(change_w) reg_obj.data.ipush[2] = 100;
-					if(change_h) reg_obj.data.ipush[3] = 40;
-					return;
-				}
-
-				var wrap_obj = M.i.get_obj(node.parentNode);
-				if(wrap_obj && wrap_obj.data.limits){
-					if(pos[0] < wrap_obj.data.limits.x[0] || pos[0]+final_w > wrap_obj.data.limits.x[1]) change_x = false;
-					if(pos[1] < wrap_obj.data.limits.y[0] || pos[1]+final_h > wrap_obj.data.limits.y[1]) change_y = false;
-				}
-
-				var max = M.i.max_wrap(node);
-				if(change_x) M.i.set_sty("left:"+pos[0]+"px;",max ? max : node);
-				if(change_y) M.i.set_sty("top:"+pos[1]+"px;",max ? max : node);
+				if(reg_obj.drag){
+					var final_x_0,final_y_0,final_x_1,final_y_1,change_x,change_y,offset;
+					final_x_0 = pos[0]-reg_obj.data.ipush[0];
+					final_y_0 = pos[1]-reg_obj.data.ipush[1];
+					final_x_1 = final_x_0+reg_obj.data.ipush[2];
+					final_y_1 = pos[1]+reg_obj.data.ipush[3];
 					
-				while(node){
-					if(change_w) M.i.set_sty("width:"+(final_w+rox+roff)+"px;",node);
-					if(change_h) M.i.set_sty("height:"+(final_h+roy)+"px;",node);
-					node = node.parentNode && node.parentNode.id && node.parentNode.id.search(/_wrap/) > -1 ? node.parentNode : false;
+					offset = reg_obj.data.drag_area !== reg_obj.me.parentNode ? 
+						reg_obj.data.drag_area.offsetTop+(reg_obj.data.drag_area.offsetHeight/2) : 0;
+					if(reg_obj.data.limits){
+						var l = reg_obj.data.limits;
+						if((final_x_0 >= l.x[0] && final_x_1 <= l.x[1])) change_x = true;
+						if((final_y_0 >= l.y[0] && final_y_1 <= l.y[1])) change_y = true;
+						M.i.throttle(function(){
+							if(change_x) M.i.set_sty("left:"+final_x_0+"px;",reg_obj.me.parentNode); else 
+								M.i.set_sty("left:"+(final_x_0 < l.x[0] ? 0 : (final_x_1 > l.x[1] ? l.x[1]-reg_obj.data.ipush[2] : final_x_1))+"px;",reg_obj.me.parentNode);
+							if(change_y) M.i.set_sty("top:"+final_y_0+"px;",reg_obj.me.parentNode); else
+								M.i.set_sty("top:"+(final_y_0 < l.y[0] ? 0 : (final_y_1 > l.y[1] ? l.y[1]-reg_obj.data.ipush[3] : final_y_1))+"px;",reg_obj.me.parentNode);
+						},10,M.i.init)();
+					}else{
+						M.i.throttle(function(){
+							M.i.set_sty("left:"+final_x_0+"px;top:"+final_y_0+"px;",reg_obj.me.parentNode);
+							reg_obj.data.last_pos = pos;
+						},10,M.i.init)();
+					}
 				}
 
-				if(change_x) reg_obj.data.ipush[0] = pos[0];
-				if(change_y) reg_obj.data.ipush[1] = pos[1];
-				if(change_w) reg_obj.data.ipush[2] = final_w;
-				if(change_h) reg_obj.data.ipush[3] = final_h;
-				if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rucD");
-				if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rlD");
-				if(change_w) M.i.set_sty("width:"+(final_w-(rox))+"px;float:left;",reg_obj.me.id);
-				if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rrD");
-				if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rdcD");
+				var winLimit = M.i.win_size();
+				var resizeLimit = (pos[0] <= 0 || pos[0] >= winLimit[0]) || (pos[1] <= 0 || pos[1] >= winLimit[1]);
+
+				if(!resizeLimit && reg_obj.resize){
+					var node = reg_obj.me;
+					var final_w,final_h,type_x,type_y;
+					var change_x,change_y,change_w,change_h;
+					change_x = change_y = change_w = change_y = false;
+					
+					switch(reg_obj.resize){
+						case "rul":
+							change_x = change_w = change_y = change_h = true;type_x = type_y = 1;
+							break;
+						case "ruc":
+							change_y = change_h = true;type_x = type_y = 1;
+							break;
+						case "rur":
+							change_w = change_h = change_y = true;type_x = 2;type_y = 1;
+							break;
+						case "rl":
+							change_w = change_x = true;type_x = type_y = 1;
+							break;
+						case "rr":
+							change_w = true;type_x = 2;type_y = 1;
+							break;
+						case "rdl":
+							change_w = change_x = change_h = true;type_x = 1;type_y = 2;
+							break;
+						case "rdc":
+							change_h = true;type_x = 1;type_y = 2;
+							break;
+						case "rdr":
+							change_w = change_h = true;type_x = type_y = 2;
+							break;
+					}
+
+					if(type_x == 1) final_w = reg_obj.data.ipush[2] + ((reg_obj.data.ipush[0]+reg_obj.data.ipush[2]) - (pos[0]+reg_obj.data.ipush[2])); else 
+						final_w = pos[0]-reg_obj.data.ipush[0];
+					if(type_y == 1) final_h = reg_obj.data.ipush[3] + ((reg_obj.data.ipush[1]+reg_obj.data.ipush[3]) - (pos[1]+reg_obj.data.ipush[3])); else
+						final_h = pos[1]-reg_obj.data.ipush[1];
+
+					if((final_w <= 100 && change_w) || (final_h <= 40 && change_h)){
+						if(change_w) reg_obj.data.ipush[2] = 100;
+						if(change_h) reg_obj.data.ipush[3] = 40;
+						return;
+					}
+
+					var wrap_obj = M.i.get_obj(node.parentNode);
+					if(wrap_obj && wrap_obj.data.limits){
+						if(pos[0] < wrap_obj.data.limits.x[0] || pos[0]+final_w > wrap_obj.data.limits.x[1]) change_x = false;
+						if(pos[1] < wrap_obj.data.limits.y[0] || pos[1]+final_h > wrap_obj.data.limits.y[1]) change_y = false;
+					}
+
+					var max = M.i.max_wrap(node);
+					if(change_x) M.i.set_sty("left:"+pos[0]+"px;",max ? max : node);
+					if(change_y) M.i.set_sty("top:"+pos[1]+"px;",max ? max : node);
+						
+					while(node){
+						if(change_w) M.i.set_sty("width:"+(final_w+rox+roff)+"px;",node);
+						if(change_h) M.i.set_sty("height:"+(final_h+roy)+"px;",node);
+						node = node.parentNode && node.parentNode.id && node.parentNode.id.search(/_wrap/) > -1 ? node.parentNode : false;
+					}
+
+					if(change_x) reg_obj.data.ipush[0] = pos[0];
+					if(change_y) reg_obj.data.ipush[1] = pos[1];
+					if(change_w) reg_obj.data.ipush[2] = final_w;
+					if(change_h) reg_obj.data.ipush[3] = final_h;
+					if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rucD");
+					if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rlD");
+					if(change_w) M.i.set_sty("width:"+(final_w-(rox))+"px;float:left;",reg_obj.me.id);
+					if(change_h) M.i.set_sty("height:"+(final_h-(roy))+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rrD");
+					if(change_w) M.i.set_sty("width:"+(final_w-(rox)+roff)+"px;","#"+reg_obj.me.parentNode.id+" > .zdelib-resize-rdcD");
+				}
 			}
 		}
 	},"capture":false},M.i.base_win);
@@ -202,14 +206,18 @@ M.prototype.init = function(){
 	},"capture":false},M.i.base_win);
 
 	M.i.add_event("mouseup",{"func":function(e){
-		M.i.cancel_event(e);
-		for(var i=0;i<M.i.reg_objs.length;i++){
-			if(M.i.reg_objs[i].drag){
-				M.i.reg_objs[i].drag = false;
-				M.i.reg_objs[i].data.ipush=false;
-				M.i.reg_objs[i].me.parentNode.style.zIndex = "auto";
+		var dragOn = false;
+		for(var i=0;i<M.i.reg_objs.length;i++) if(M.i.reg_objs[i].drag) dragOn = true;
+		if(dragOn){
+			M.i.cancel_event(e);
+			for(var i=0;i<M.i.reg_objs.length;i++){
+				if(M.i.reg_objs[i].drag){
+					M.i.reg_objs[i].drag = false;
+					M.i.reg_objs[i].data.ipush=false;
+					M.i.reg_objs[i].me.parentNode.style.zIndex = "auto";
+				}
+				if(M.i.reg_objs[i].resize) M.i.reg_objs[i].resize = false;
 			}
-			if(M.i.reg_objs[i].resize) M.i.reg_objs[i].resize = false;
 		}
 	},"capture":false},M.i.base_win);
 
