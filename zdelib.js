@@ -1412,10 +1412,7 @@ M.prototype.zt = {
 	},
 	week_day:function(d,m,y){
 		try{
-			var dt = M.i.zt.d();
-			dt.setYear(y);
-			dt.setMonth(m-1);
-			dt.setDate(d);
+			var dt = new Date(y+"-"+(m < 10 ? "0"+m : m)+"-"+(d < 10 ? "0"+d : d));
 			return dt.getDay();
 		}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 	},
