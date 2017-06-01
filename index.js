@@ -22,7 +22,7 @@ Index.prototype.show_example = function(example_id){
 			_("#panel-centerC").addm("<form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)&nbsp;&nbsp;</td></tr></table></form>");
 			_("#stock-inputC")._class("Qsearch",{
 				ajax:{
-					url:"http://d.yimg.com/aq/autoc?query=$&region=ES&lang=es-ES",
+					url:"http://d.yimg.com/aq/autoc?query=$&region=EN&lang=en-US",
 					pcallback:"YAHOO.util.ScriptNodeDataSource.callbacks",
 					type:"jsonp",
 					id:"stock_search",
