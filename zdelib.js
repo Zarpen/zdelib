@@ -48,7 +48,7 @@ function M(id,sub_id){
 			if(id_char == ".") res = M.i.getElementsByClassName(name);
 			if(id_char == "|") res = temp_base.getElementsByTagName(name);
 			if(name.indexOf(">") >= 0) res = M.i.z_selector(id.slice(0,id.length-1));
-			if(res && !(res instanceof Array) && res.length !== undefined){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
+			if(res && !(res instanceof Array) && res.length !== undefined && (res.nodeType !== 0 && res.nodeType !== false && !res.nodeType)){var temp_array = [];for(var i=0;i<res.length;i++) temp_array.push(res[i]);res = temp_array;};
 			if(res && res instanceof Array && (res.length === 1 || res.length === 0)) res = res[0]; 
 			M.i.me = false;
 			M.i.me = res;
