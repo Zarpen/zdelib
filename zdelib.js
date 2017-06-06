@@ -265,6 +265,16 @@ M.prototype.init = function(){
 		    window.setTimeout(callback, 1000 / M.i.zg2_base_fps);
 		  };
 	})()
+
+	M.i.mobile_host = M.i.isMobile({"width":800,"height":600});
+
+	M.i.add_event("resize",{"func":function(e){
+		M.i.mobile_host = M.i.isMobile({"width":800,"height":600});
+		M.i.zb.updateBinds({"bindSpace":"zdelib","bindRule":"mobile_host"});
+	},"capture":false},M.i.base_win);
+
+	M.i.zb.createBindSpace({"name":"zdelib","scope":M.i});
+	M.i.zb.addBindRule({"bindSpace":"zdelib","bindProperty":"mobile_host","bindElement":{"enabled":true,"type":"property"}});
 }
 M.prototype.getMe = function(){
 	return M.i.me;
@@ -637,6 +647,11 @@ M.prototype.createCSS = function(name,options){
 }
 M.prototype.addRule = function(rule_array,stylesheet){
 	try{var target_sheet;
+		var new_rule_array = [];
+
+	// pre-process special css rules
+	for(var i=0;i<rule_array.length;i++) if(rule_array[i][0] == "@import"){ M.i.createCSS("",{"attr":"rel=stylesheet;href="+rule_array[i][1]+";","href":true}); }else{ new_rule_array.push(rule_array[i]); }
+
 	if(!isNaN(stylesheet)){
 		target_sheet = M.i.base_doc.styleSheets[stylesheet];
 	}else{
@@ -648,20 +663,20 @@ M.prototype.addRule = function(rule_array,stylesheet){
 	if(target_sheet){
 		// test for func availability
 		if(target_sheet.addRule){
-			for(var i=0;i<rule_array.length;i++) target_sheet.addRule(rule_array[i][0],rule_array[i][1],rule_array[i][2] ? rule_array[i][2] : target_sheet.rules.length);
+			for(var i=0;i<new_rule_array.length;i++) target_sheet.addRule(new_rule_array[i][0],new_rule_array[i][1],new_rule_array[i][2] ? new_rule_array[i][2] : target_sheet.rules.length);
 		}else if(target_sheet.insertRule){
-			for(var i=0;i<rule_array.length;i++) target_sheet.insertRule(rule_array[i][0]+"{"+rule_array[i][1]+"}",rule_array[i][2] ? rule_array[i][2] : target_sheet.cssRules.length);
+			for(var i=0;i<new_rule_array.length;i++) target_sheet.insertRule(new_rule_array[i][0]+"{"+new_rule_array[i][1]+"}",new_rule_array[i][2] ? new_rule_array[i][2] : target_sheet.cssRules.length);
 		}else{
 			// no functions available try rules array
 			if(target_sheet.cssRules){
-				for(var i=0;i<rule_array.length;i++){
-					var index = rule_array[i][2] ? rule_array[i][2] : target_sheet.cssRules.length;
-					target_sheet.cssRules[index] = rule_array[i][0]+"{"+rule_array[i][1]+"}";
+				for(var i=0;i<new_rule_array.length;i++){
+					var index = new_rule_array[i][2] ? new_rule_array[i][2] : target_sheet.cssRules.length;
+					target_sheet.cssRules[index] = new_rule_array[i][0]+"{"+new_rule_array[i][1]+"}";
 				}
 			}else if(target_sheet.rules){
-				for(var i=0;i<rule_array.length;i++){
-					var index = rule_array[i][2] ? rule_array[i][2] : target_sheet.rules.length;
-					target_sheet.rules[index] = rule_array[i][0]+"{"+rule_array[i][1]+"}";
+				for(var i=0;i<new_rule_array.length;i++){
+					var index = new_rule_array[i][2] ? new_rule_array[i][2] : target_sheet.rules.length;
+					target_sheet.rules[index] = new_rule_array[i][0]+"{"+new_rule_array[i][1]+"}";
 				}
 			}
 		}
@@ -670,6 +685,11 @@ M.prototype.addRule = function(rule_array,stylesheet){
 }
 M.prototype.deleteRule = function(rule_array,stylesheet){
 	try{var target_sheet;
+		var new_rule_array = [];
+
+	// pre-process special css rules
+	for(var i=0;i<rule_array.length;i++) if(!(rule_array[i][0] == "@import")) new_rule_array.push(rule_array[i]);
+
 	if(!isNaN(stylesheet)){
 		target_sheet = M.i.base_doc.styleSheets[stylesheet];
 	}else{
@@ -680,22 +700,22 @@ M.prototype.deleteRule = function(rule_array,stylesheet){
 	}
 	if(target_sheet){
 		// query array type {index,selectors}
-		var index_array = !isNaN(rule_array[0]) ? true : false;
+		var index_array = !isNaN(new_rule_array[0]) ? true : false;
 		// test for func availability
 		if(target_sheet.removeRule){
 			if(index_array){
-				for(var i=0;i<rule_array;i++) target_sheet.removeRule(rule_array[i]);
+				for(var i=0;i<new_rule_array.length;i++) target_sheet.removeRule(new_rule_array[i]);
 			}else{
-				for(var i=0;i<rule_array;i++){
-					for(var j=0;j<target_sheet.rules.length;j++) if (target_sheet.rules[j].selectorText==rule_array[i]) target_sheet.removeRule(j);
+				for(var i=0;i<new_rule_array.length;i++){
+					for(var j=0;j<target_sheet.rules.length;j++) if (target_sheet.rules[j].selectorText==new_rule_array[i][0]) target_sheet.removeRule(j);
 				}
 			}
 		}else if(target_sheet.deleteRule){
 			if(index_array){
-				for(var i=0;i<rule_array;i++) target_sheet.deleteRule(rule_array[i]);
+				for(var i=0;i<new_rule_array.length;i++) target_sheet.deleteRule(new_rule_array[i]);
 			}else{
-				for(var i=0;i<rule_array;i++){
-					for(var j=0;j<target_sheet.cssRules.length;j++) if (target_sheet.cssRules[j].selectorText==rule_array[i]) target_sheet.deleteRule(j);
+				for(var i=0;i<new_rule_array.length;i++){
+					for(var j=0;j<target_sheet.cssRules.length;j++) if (target_sheet.cssRules[j].selectorText==new_rule_array[i][0]) target_sheet.deleteRule(j);
 				}
 			}
 		}else{
@@ -706,7 +726,7 @@ M.prototype.deleteRule = function(rule_array,stylesheet){
 					var c = 0;
 					for(var i=0;i<target_sheet.cssRules;i++){
 						var found = false;
-						for(var j=0;j<rule_array;j++) if(i == rule_array[j]) found = true;
+						for(var j=0;j<new_rule_array.length;j++) if(i == new_rule_array[j]) found = true;
 						if(!found){temp_array[c]=target_sheet.cssRules[i];c++;}
 					}
 					target_sheet.cssRules = temp_array;
@@ -715,7 +735,7 @@ M.prototype.deleteRule = function(rule_array,stylesheet){
 					var c = 0;
 					for(var i=0;i<target_sheet.cssRules;i++){
 						var found = false;
-						for(var j=0;j<rule_array;j++) if(target_sheet.cssRules[i].selectorText == rule_array[j]) found = true;
+						for(var j=0;j<new_rule_array.length;j++) if(target_sheet.cssRules[i].selectorText == new_rule_array[j][0]) found = true;
 						if(!found){temp_array[c]=target_sheet.cssRules[i];c++;}
 					}
 					target_sheet.cssRules = temp_array;
@@ -726,7 +746,7 @@ M.prototype.deleteRule = function(rule_array,stylesheet){
 					var c = 0;
 					for(var i=0;i<target_sheet.rules;i++){
 						var found = false;
-						for(var j=0;j<rule_array;j++) if(i == rule_array[j]) found = true;
+						for(var j=0;j<new_rule_array.length;j++) if(i == new_rule_array[j]) found = true;
 						if(!found){temp_array[c]=target_sheet.rules[i];c++;}
 					}
 					target_sheet.rules = temp_array;
@@ -735,7 +755,7 @@ M.prototype.deleteRule = function(rule_array,stylesheet){
 					var c = 0;
 					for(var i=0;i<target_sheet.rules;i++){
 						var found = false;
-						for(var j=0;j<rule_array;j++) if(target_sheet.rules[i].selectorText == rule_array[j]) found = true;
+						for(var j=0;j<new_rule_array.length;j++) if(target_sheet.rules[i].selectorText == new_rule_array[j][0]) found = true;
 						if(!found){temp_array[c]=target_sheet.rules[i];c++;}
 					}
 					target_sheet.rules = temp_array;
@@ -1966,6 +1986,31 @@ M.prototype.zc = {
     if(history_compatible) return M.i.base_win.history; else return history_compatible; 
   },
 }
+// binding class
+M.prototype.zb = {
+	createBindSpace: function(options){
+		try{M.i.bindings[options["name"] ? options["name"] : M.i.guid()] = {"scope": options["scope"]};return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	deleteBindSpace: function(name){
+		try{delete M.i.bindings[name];return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	addBindRule: function(options){
+		try{M.i.bindings[options["bindSpace"]][options["bindProperty"]] = options["bindElement"];options["bindElement"]["oldValue"] = (options["bindElement"]["type"] == "property" ? M.i.bindings[options["bindSpace"]]["scope"][options["bindProperty"]] : M.i.bindings[options["bindSpace"]]["scope"][options["bindProperty"]].apply(options["bindElement"]["this"] || M.i,options["bindElement"]["args"] || []));return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	deleteBindRule: function(bindSpaceName,bindRuleName){
+		try{delete M.i.bindings[bindSpaceName][bindRuleName];return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	updateBinds: function(options){
+		try{for(var space in M.i.bindings){if(options["bindSpace"] && options["bindSpace"] != space) continue; for(var rule in M.i.bindings[space]){if(options["bindRule"] && options["bindRule"] != rule) continue;
+			var newValue = (M.i.bindings[space][rule]["type"] == "property" ? M.i.bindings[space]["scope"][rule] : M.i.bindings[space]["scope"][rule](M.i.bindings[space][rule]["this"] || M.i,M.i.bindings[space][rule]["args"] || []));
+			if(M.i.bindings[space][rule]["enabled"] && M.i.bindings[space][rule]["oldValue"] !== newValue) for(var i = 0;i < M.i.bindings["bindHandlers"].length;i++) if((M.i.bindings["bindHandlers"][i]["scope"] == "*" || M.i.bindings["bindHandlers"][i]["scope"] == space) && (M.i.bindings["bindHandlers"][i]["target"] == "*" || M.i.bindings["bindHandlers"][i]["target"] == rule)) M.i.bindings["bindHandlers"][i]["func"].apply(M.i.bindings["bindHandlers"][i]["this"] || M.i,[{"oldValue":M.i.bindings[space][rule]["oldValue"],"newValue":newValue,"bindSpace":space,"bindRule":rule}]);
+			M.i.bindings[space][rule]["oldValue"] = newValue;
+		}}return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	},
+	addBindHandler: function(handler){
+		try{M.i.bindings["bindHandlers"].push(handler);return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+	}
+}
 // EVENT FUNCTIONS
 M.prototype.event_pos = function(e){
 	try{var posx = 0;
@@ -2948,6 +2993,11 @@ M.prototype.exceptions = {
     this.toString = function(){return this.value + this.message};
   }
 }
+M.prototype.isMobile = function(options){
+	try{
+		return window.innerWidth <= options["width"] && window.innerHeight <= options["height"];
+	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
+}
 // lib vars
 if(typeof M.i == 'undefined') M.i = (function(){ return new M();})();
 if(typeof M.i.me == 'undefined') M.i.me = undefined;
@@ -2976,7 +3026,9 @@ if(typeof M.i.zg2_computed_ratio == 'undefined') M.i.zg2_computed_ratio = false;
 if(typeof M.i.zg2_base_resolution == 'undefined') M.i.zg2_base_resolution = [300,150];
 if(typeof M.i.zg2_device_resolution == 'undefined') M.i.zg2_device_resolution = false;
 if(typeof M.i.zg2_enableCv == 'undefined') M.i.zg2_enableCv = true;
-if(typeof M.i.zg2_base_fps == 'undefined') M.i.zg2_base_fps = 60;								     
+if(typeof M.i.zg2_base_fps == 'undefined') M.i.zg2_base_fps = 60;
+if(typeof M.i.mobile_host == 'undefined') M.i.mobile_host = false;
+if(typeof M.i.bindings == 'undefined') M.i.bindings = {"bindHandlers":[]};								     
 // lib document function events to set
 M.i.init();
 })();
