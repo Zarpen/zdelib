@@ -14,12 +14,15 @@ Index.prototype.show_example = function(example_id){
 	_("#panel-centerC").clear();
 	
 	switch(example_id){
+		case "introduction-example":
+			_("#panel-centerC").addm("<article><h1>Introduction</h1><div>Simple examples using zdelib!</div></article>");
+		break;
 		case "tip-example":
-			_("#panel-centerC").addm("<form><table><tr><td>Name:&nbsp;&nbsp;</td><td><input title='Enter your Name' /></td></tr><tr>\
-				<td colspan='2'>&nbsp;</td></tr><tr><td>Last Name:&nbsp;&nbsp;</td><td><input title='Enter your Last Name' /></td></tr></table></form>").nav("|td > |inputC")._class("Infotip");
+			_("#panel-centerC").addm("<article><h1>Simple tip example</h1><div><form><table><tr><td>Name:&nbsp;&nbsp;</td><td><input title='Enter your Name' /></td></tr><tr>\
+				<td colspan='2'>&nbsp;</td></tr><tr><td>Last Name:&nbsp;&nbsp;</td><td><input title='Enter your Last Name' /></td></tr></table></form></div></article>").nav("|td > |inputC")._class("Infotip");
 		break;
 		case "stock-example":
-			_("#panel-centerC").addm("<form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)&nbsp;&nbsp;</td></tr></table></form>");
+			_("#panel-centerC").addm("<article><h1>Stock search example</h1><div><form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)&nbsp;&nbsp;</td></tr></table></form></div></article>");
 			_("#stock-inputC")._class("Qsearch",{
 				ajax:{
 					url:"http://d.yimg.com/aq/autoc?query=$&region=EN&lang=en-US",
@@ -48,7 +51,7 @@ Index.prototype.show_example = function(example_id){
 								if(_("#quote_detailD")){
 									for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
 								}else{
-									_("#panel-centerC").addm("<table id='quote_detail' class='quote-detail' ></table>");
+									_("#panel-centerC").addm("<article><table id='quote_detail' class='quote-detail' ></table></article>");
 									var max_columns = 3;
 									var td_count = 0,tr_count = 0;
 									_("#quote_detailC").add("tr");
@@ -70,12 +73,12 @@ Index.prototype.show_example = function(example_id){
 			});
 		break;	
 		case "calendar-example":
-			_("#panel-centerC").addm("<form><table><tr><td>Select Start Date:</td><td><input id='date-input-start' type='text' size='10' /></td>"+
-			"<td>&nbsp;&nbsp;&nbsp;&nbsp;Select End Date:</td><td><input id='date-input-end' type='text' size='10' /></td></tr></table></form>")
+			_("#panel-centerC").addm("<article><h1>Calendar example</h1><div><form><table><tr><td>Select Start Date:</td><td><input id='date-input-start' type='text' size='10' /></td>"+
+			"<td>&nbsp;&nbsp;&nbsp;&nbsp;Select End Date:</td><td><input id='date-input-end' type='text' size='10' /></td></tr></table></form></div></article>")
 			.nav("#date-input-startC")._class("Calendar").nav("#date-input-endC")._class("Calendar");
 		break;
 		case "dialog-example":
-			_("#panel-centerC").addm("<div><p>Clik <a id='open_window' href='#' >here</a> for window open</p></div>").nav("#open_windowC").add_event("click",{func:function(e){
+			_("#panel-centerC").addm("<article><h1>Dialog example</h1><div><p>Clik <a id='open_window' href='#' >here</a> for window open</p></div></article>").nav("#open_windowC").add_event("click",{func:function(e){
 				_().cancel_event(e);
 				var id = _().guid();
 				_("|bodyC").addm("<div id='"+id+"' ><p>Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt"+ 
@@ -104,14 +107,15 @@ _().load(function(){
 	
 	_("|bodyC")._class("Index");
 	
-	_("|bodyC").addm("<div id='container' class='container' ><div id='header' class='header' ><div id='logo' ><img alt='zdelib' border='0' src='resources/img/logo.png' /></div></div>"
-		+"<div id='panel-left' class='panel-left' style='float:left' ><ul id='examples-list' class='menu-list' >"
+	_("|bodyC").addm("<main id='container' class='container' ><header id='header' class='header' ><div id='logo' ><img alt='zdelib' border='0' src='resources/img/logo.png' /></div></header>"
+		+"<aside id='panel-left' class='panel-left' ><nav><ul id='examples-list' class='menu-list' >"
+		+"<li><a id='introduction-example' href='#'>Introduction</a></li>"
 		+"<li><a id='tip-example' href='#'>Simple tip example</a></li>"
 		+"<li><a id='stock-example' href='#'>Stock search example</a></li>"
 		+"<li><a id='calendar-example' href='#'>Calendar example</a></li>"
 		+"<li><a id='dialog-example' href='#'>Dialog example</a></li>"
-		+"<li><a id='gallery-example' href='#'>Gallery example</a></li></ul></div>"
-		+"<div id='panel-center' class='panel-center' style='float:left' ></div><div id='panel-right' style='float:left' class='panel-right' ></div><div style='float:none;clear:both' ></div><div id='footer' class='footer' ></div></div>");
+		+"<li><a id='gallery-example' href='#'>Gallery example</a></li></ul></nav></aside>"
+		+"<section id='panel-center' class='panel-center' ></section><section id='panel-right' class='panel-right' ></section><div class='clearFooter' ></div><footer id='footer' class='footer' ><div class='footer-content' ><a href='https://github.com/Zarpen//zdelib' target='_blank' >Github</a></div></footer></main>");
 		
 	_("#examples-list > |li > |aC").add_event("click",{"func":function(){_("|bodyC").invoke("show_example",this.id);},"capture":true});
 	
