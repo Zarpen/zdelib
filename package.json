@@ -1,0 +1,28 @@
+{
+  "name": "zdelib",
+  "version": "1.0.0",
+  "description": "Javascript library with useful functions and extendable by classes",
+  "main": "zdelib.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "webpack"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zarpen/zdelib.git"
+  },
+  "keywords": [
+    "Javascript",
+    "Library"
+  ],
+  "author": "Alberto Romo Valverde (Zarpen)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Zarpen/zdelib/issues"
+  },
+  "homepage": "https://github.com/Zarpen/zdelib#readme",
+  "devDependencies": {
+    "webpack": "^4.29.3",
+    "webpack-cli": "^3.2.3"
+  }
+}
