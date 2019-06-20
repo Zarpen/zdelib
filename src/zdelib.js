@@ -67,10 +67,10 @@ function M(id,sub_id){
 (function (){
 //M CLASS FUNCTIONS (DOM MANIPULATION AND MORE)
 M.prototype.init = function(){
-	M.i.mobile_host = M.i.isMobile({"width":800,"height":600});
+	M.i.mobile_host = M.i.isMobile({"width":800,"height":800});
 
 	M.i.add_event("resize",{"func":function(e){
-		M.i.mobile_host = M.i.isMobile({"width":800,"height":600});
+		M.i.mobile_host = M.i.isMobile({"width":800,"height":800});
 		M.i.zb.updateBinds({"bindSpace":"zdelib","bindRule":"mobile_host"});
 	},"capture":false},M.i.base_win);
 
@@ -3002,6 +3002,8 @@ M.prototype.isMobile = function(options){
 	try{
 		var width = window.outerWidth ? (window.outerWidth < window.innerWidth ? window.outerWidth : window.innerWidth) : window.innerWidth;
 		var height = window.outerHeight ? (window.outerHeight < window.innerHeight ? window.outerHeight : window.innerHeight) : window.innerHeight;
+		width = window.devicePixelRatio ? width/window.devicePixelRatio : width;
+		height = window.devicePixelRatio ? height/window.devicePixelRatio : height;
 		return width <= options["width"] && height <= options["height"];
 	return M.i;}catch(e){if(M.i.debug_mode) M.i.error(e,arguments);}
 }
