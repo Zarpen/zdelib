@@ -6,9 +6,15 @@ function Infotip(args){
 	me.selector = args.selector;
 	me.title = me.focus.title;
 
-	_().add_event("mousemove",{"func":_().throttle(me.show,10,me),"capture":true,"with":me},me.focus);
-	_().add_event("mouseout",{"func":me.hide,"capture":true,"with":me},me.focus);
-	_().set_attr("title=;",me.focus);
+	if(_().mobile_host){
+
+		_().add_event("mousedown",{"func":function(e){ me.show(e); setTimeout(function(){me.hide(e);},1000);},"capture":true,"with":me},me.focus);
+		_().set_attr("title=;",me.focus);
+	}else{
+		_().add_event("mousemove",{"func":_().throttle(me.show,10,me),"capture":true,"with":me},me.focus);
+		_().add_event("mouseout",{"func":me.hide,"capture":true,"with":me},me.focus);
+		_().set_attr("title=;",me.focus);
+	}
 }
 Infotip.prototype.show = function(e){
 	_().cancel_event(e);
