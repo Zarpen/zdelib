@@ -76,7 +76,13 @@ _().load(function(){
 
 	// prepare css
 	_().createCSS("decoration",{"attr":"type=text/css;"});
-	_().addRule(baseRules,"decoration");
+	_().deleteRule(mobileRules,"decoration");
+
+	if(_().mobile_host){
+		_().addRule(mobileRules,"decoration");
+	}else{
+		_().addRule(baseRules,"decoration");
+	}
 
 	_().zb.addBindHandler({"scope":"zdelib","target":"mobile_host","func":function(detail){
 		_().deleteRule(mobileRules,"decoration");
