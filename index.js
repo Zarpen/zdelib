@@ -72,12 +72,12 @@ Index.prototype.show_example = function(example_id){
 					type:"json",
 					id:"stock_detail",
 					headers: [["X-API-KEY","jioYjveyala37vGzhV0DCHzwoSeGy6G5Ah1nNm4j"]],
-					func:requestCallback,
-					poll: {
+					func:requestCallback
+					/*poll: {
 						poll:"stock_detail_poll",
 						poll_delay:60000,
 						pfunc:requestCallback
-					}
+					}*/
 				});
 			});
 		break;	
