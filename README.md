@@ -14,7 +14,7 @@ library in the future.
 
 Examples
 
-You can see some basic examples at http://zarpen.github.com/zdelib/
+You can see some basic examples at http://zarpen.github.io/zdelib/
 
 Manual
 
