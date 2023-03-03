@@ -89,6 +89,8 @@ Qsearch.prototype.search = function(){
 	},me.delay,me)();
 }
 Qsearch.prototype.result = function(json){
+	json = json[0];
+	
 	var me = this;
 	var counter = 0;
 	// hide loading gif

@@ -25,50 +25,59 @@ Index.prototype.show_example = function(example_id){
 			_("#panel-centerC").addm("<article><h1>Stock search example</h1><div><form><table><tr><td>Search Stock&nbsp;&nbsp;</td><td><input id='stock-input' type='text' />&nbsp;&nbsp;(Real time quotes)&nbsp;&nbsp;</td></tr></table></form></div></article>");
 			_("#stock-inputC")._class("Qsearch",{
 				ajax:{
-					url:"http://d.yimg.com/aq/autoc?query=$&region=EN&lang=en-US",
-					pcallback:"YAHOO.util.ScriptNodeDataSource.callbacks",
-					type:"jsonp",
+					url:"https://yfapi.net/v6/finance/autocomplete?region=US&lang=en&query=$",
+					method: "GET",
+					async: true,
+					type:"json",
 					id:"stock_search",
-					pfunc:function(data){if(_('#stock-inputD')) _('#stock-inputC').invoke("result",data);},
-					wrap:{key:"YAHOO",value:{util:{ScriptNodeDataSource:{callbacks:0}}},function_key:"callbacks"}
+					headers: [["X-API-KEY","jioYjveyala37vGzhV0DCHzwoSeGy6G5Ah1nNm4j"]],
+					func:function(data){if(_('#stock-inputD')) _('#stock-inputC').invoke("result",data);}
 				},
 				delay:500,
 				suggestion_columns:["symbol","name","exchDisp","typeDisp"]
 			});
 			_('#stock-inputC').invoke("bind","select",function(options){
+				let requestCallback = function(json){
+					//if(_().poll_live("stock_detail_poll")){
+						try{
+							json = json[0];
+							_().hide_wait_msg("stock-detail-loading");
+							var quote = json.quoteResponse.result[0];
+							if(_("#quote_detailD")){
+								for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
+							}else{
+								_("#panel-centerC").addm("<article><table id='quote_detail' class='quote-detail' ></table></article>");
+								var max_columns = 3;
+								var td_count = 0,tr_count = 0;
+								_("#quote_detailC").add("tr");
+								for(key in quote){
+									_("#quote_detail > |tbody > |trC").ix(tr_count).add("td",key,{text:key+": "+quote[key],sty:"paddingRight:10px;"});
+									td_count++;
+									if(td_count >= max_columns){_("#quote_detailC").add("tr");td_count = 0;tr_count++;}
+								}
+							}
+						}catch(e){
+							if(!_("#quote_detailD")) 
+								_("#panel-centerC").show_wait_msg({name:"stock-detail-loading",img:{attr:"border=0;alt=loading;src=resources/img/loading.gif"},container:{sty:"padding:1%;"}});
+						}
+					//}
+				};
 				var symbol = options["data"].ResultSet.Result[options["item"]]["symbol"];
 				_("#quote_detailC").del();
 				_("#panel-centerC").show_wait_msg({name:"stock-detail-loading",img:{attr:"border=0;alt=loading;src=resources/img/loading.gif"},container:{sty:"padding:1%;"}});
 				_().request({
-					url:"http://query.yahooapis.com/v1/public/yql?q=select * from yahoo.finance.quotes where symbol = '"+symbol+"'&env=store://datatables.org/alltableswithkeys&format=json",
-					type:"jsonp",
+					url:"https://yfapi.net/v6/finance/quote?region=US&lang=en&symbols=" + symbol,
+					method: "GET",
+					async: true,
+					type:"json",
 					id:"stock_detail",
-					pfunc:function(json){
-						//if(_().poll_live("stock_detail_poll")){
-							try{
-								_().hide_wait_msg("stock-detail-loading");
-								var quote = json.query.results.quote;
-								if(_("#quote_detailD")){
-									for(key in quote) _("#"+key+"C").setText(key+": "+quote[key]);
-								}else{
-									_("#panel-centerC").addm("<article><table id='quote_detail' class='quote-detail' ></table></article>");
-									var max_columns = 3;
-									var td_count = 0,tr_count = 0;
-									_("#quote_detailC").add("tr");
-									for(key in quote){
-										_("#quote_detail > |tbody > |trC").ix(tr_count).add("td",key,{text:key+": "+quote[key],sty:"paddingRight:10px;"});
-										td_count++;
-										if(td_count >= max_columns){_("#quote_detailC").add("tr");td_count = 0;tr_count++;}
-									}
-								}
-							}catch(e){
-								if(!_("#quote_detailD")) 
-									_("#panel-centerC").show_wait_msg({name:"stock-detail-loading",img:{attr:"border=0;alt=loading;src=resources/img/loading.gif"},container:{sty:"padding:1%;"}});
-							}
-						//}
-					},
-					poll:"stock_detail_poll",
-					poll_delay:60000
+					headers: [["X-API-KEY","jioYjveyala37vGzhV0DCHzwoSeGy6G5Ah1nNm4j"]],
+					func:requestCallback,
+					poll: {
+						poll:"stock_detail_poll",
+						poll_delay:60000,
+						pfunc:requestCallback
+					}
 				});
 			});
 		break;	
